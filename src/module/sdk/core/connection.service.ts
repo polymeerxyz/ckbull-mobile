@@ -11,6 +11,8 @@ import {
 } from "@ckb-lumos/base";
 import { Config, ScriptConfig } from "@ckb-lumos/config-manager";
 import { isSecp256k1Blake160Address, isAcpAddress, isSecp256k1Blake160MultisigAddress } from "@ckb-lumos/common-scripts/lib/helper";
+import { createInstance } from "dotbit";
+import { BitAccountRecordAddress } from "dotbit/lib/fetchers/BitIndexer.type";
 
 // AGGRON4 for test, LINA for main
 const { AGGRON4, LINA } = config.predefined;
@@ -243,6 +245,29 @@ export class ConnectionService {
         } catch (err) {
             return false;
         }
+    }
+
+    static isDomain(domain: string): boolean {
+        if (!domain) {
+            return false;
+        }
+        try {
+            const account = ConnectionService.domainExistFromBit(domain);
+            return account !== null;
+        } catch (err) {
+            return false;
+        }
+    }
+
+    static domainExistFromBit(domain: string): boolean {
+        const dotbit = createInstance();
+        const account = dotbit.account(domain);
+        return account.status === 0 ? true : false;
+    }
+
+    static async getAddressFromDomain(domain: string): Promise<BitAccountRecordAddress[]> {
+        const dotbit = createInstance();
+        return await dotbit.addresses(domain);
     }
 
     static isOnepassAddress(network: Environments, address: string): boolean {

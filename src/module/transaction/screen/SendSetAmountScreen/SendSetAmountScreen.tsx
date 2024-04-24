@@ -21,7 +21,6 @@ export const SEND_SET_AMOUNT_FORM_KEYS: Partial<Record<keyof SendState, keyof Se
 
 const SendSetAmountScreen = (): JSX.Element => {
     const [sendState, setSendState] = useRecoilState(sendRecoilState);
-
     const [asset, setAsset] = useState<Asset | undefined>(sendState.asset);
     const [amount, setAmount] = useState<string | undefined>(sendState.amount?.toString() ?? undefined);
     const translate = useTranslate();
@@ -34,6 +33,7 @@ const SendSetAmountScreen = (): JSX.Element => {
         setSendState((oldState) => ({
             ...oldState,
             ...res,
+            receiverAddress: oldState.addressDomain ? oldState.addressDomain : oldState.receiverAddress,
         }));
         setTab(SendScreens.CONFIRMATION);
     };

@@ -1,6 +1,4 @@
-import { Col, Form, IconButton, PressableText, Typography, useSetTab, useToast } from "@peersyst/react-native-components";
-import TextField from "module/common/component/input/TextField/TextField";
-import { useTheme } from "@peersyst/react-native-styled";
+import { Col, Form, PressableText, Typography, useSetTab, useToast } from "@peersyst/react-native-components";
 import Button from "module/common/component/input/Button/Button";
 import sendRecoilState from "module/transaction/state/SendState";
 import { useState } from "react";
@@ -10,8 +8,8 @@ import WalletSelector from "module/wallet/component/input/WalletSelector/WalletS
 import useUncommittedTransaction from "module/transaction/hook/useUncommittedTransaction";
 import useSelectedNetwork from "module/settings/hook/useSelectedNetwork";
 import { useTranslate } from "module/common/hook/useTranslate";
-import { CameraIcon } from "icons";
 import QrScanner from "module/common/component/input/QrScanner/QrScanner";
+import TextFieldAddressOrDomain from "module/transaction/component/input/TextFieldAddressOrDomain/TextFieldAddressOrDomain";
 
 export interface SendForm {
     sender: number;
@@ -23,7 +21,8 @@ const SendToAddressScreen = () => {
     const [sendState, setSendState] = useRecoilState(sendRecoilState);
     const [receiverAddress, setReceiverAddress] = useState(sendState.receiverAddress || "");
     const [scanQr, setScanQr] = useState(false);
-    const { palette } = useTheme();
+    const [domain, setDomain] = useState("");
+
     const { showToast, hideToast } = useToast();
     const setTab = useSetTab();
     const uncommittedTransaction = useUncommittedTransaction();
@@ -42,9 +41,22 @@ const SendToAddressScreen = () => {
         });
     };
 
+    const handleSenderChange = (sender: number) => {
+        setSendState((oldState) => ({ ...oldState, senderWalletIndex: sender }));
+    };
+
     const handleSubmit = ({ sender, receiver }: SendForm) => {
         setSendState((oldState) => ({ ...oldState, senderWalletIndex: sender, receiverAddress: receiver }));
         setTab(SendScreens.AMOUNT_AND_MESSAGE);
+    };
+
+    const handleChipAddressPress = (domain: string, sender: number) => {
+        setSendState((oldState) => ({
+            ...oldState,
+            domain,
+            senderWalletIndex: sender || 0,
+        }));
+        setTab(SendScreens.SELECT_ADDRESS);
     };
 
     return (
@@ -55,16 +67,12 @@ const SendToAddressScreen = () => {
                         label={translate("select_a_wallet")}
                         required
                         name="sender"
+                        onChange={handleSenderChange}
                         defaultValue={sendState.senderWalletIndex}
                     />
-                    <TextField
+                    <TextFieldAddressOrDomain
                         label={translate("send_to")}
                         placeholder={translate("address")}
-                        suffix={
-                            <IconButton style={{ color: palette.primary, fontSize: 24 }} onPress={() => setScanQr(true)}>
-                                <CameraIcon />
-                            </IconButton>
-                        }
                         name="receiver"
                         validators={{ address: network }}
                         value={receiverAddress}
@@ -72,6 +80,10 @@ const SendToAddressScreen = () => {
                         autoCapitalize="none"
                         autoCorrect={false}
                         style={{ component: { backgroundColor: "transparent" } }}
+                        domain={domain}
+                        onDomainChange={setDomain}
+                        onScanQr={() => setScanQr(true)}
+                        onAddressDomainChipPress={handleChipAddressPress}
                     />
                     <Col gap="5%">
                         {uncommittedTransaction && (

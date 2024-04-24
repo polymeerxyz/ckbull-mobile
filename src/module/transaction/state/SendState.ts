@@ -6,6 +6,8 @@ export interface SendState {
     receiverAddress?: string;
     amount?: string;
     message?: string;
+    domain?: string;
+    addressDomain?: string;
     asset: Asset;
 }
 
