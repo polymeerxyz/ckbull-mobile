@@ -2,12 +2,14 @@ import { AppCurrency } from "module/wallet/component/display/Balance/Balance.typ
 import BaseMock from "../base.mock";
 import { MOCKED_ADDRESS } from "../wallet";
 import { AssetMock } from "../wallet/asset.mock";
+import { BitAccountRecordAddressMock } from "../wallet/as.mock";
 
 export interface ISendStateMock {
     senderWalletIndex?: number;
-    receiverAddress?: string;
+    receiver?: string;
     amount?: string;
     message?: string;
+    receiverDomainAddress?: BitAccountRecordAddressMock;
     token: AppCurrency | string;
     asset: AssetMock;
 }
@@ -19,13 +21,15 @@ export class SendStateMock extends BaseMock implements ISendStateMock {
     message?: string | undefined;
     token: AppCurrency | string;
     asset: AssetMock;
-    constructor({ senderWalletIndex, receiverAddress, amount, message, token, asset }: Partial<ISendStateMock> = {}) {
+    receiverDomainAddress?: BitAccountRecordAddressMock | undefined;
+    constructor({ senderWalletIndex, receiver, amount, message, token, asset, receiverDomainAddress }: Partial<ISendStateMock> = {}) {
         super();
         this.amount = amount;
         this.message = message;
-        this.receiverAddress = receiverAddress || MOCKED_ADDRESS;
+        this.receiverAddress = receiver || MOCKED_ADDRESS;
         this.senderWalletIndex = senderWalletIndex || 0;
         this.token = token || "CKB";
         this.asset = asset || new AssetMock();
+        this.receiverDomainAddress = receiverDomainAddress || new BitAccountRecordAddressMock();
     }
 }

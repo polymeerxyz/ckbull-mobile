@@ -2,7 +2,7 @@ import { BaseValidator } from "@peersyst/react-native-components";
 import { ConnectionService, Environments } from "module/sdk";
 import { TranslateFn } from "@peersyst/react-native-components";
 
-export class CkbAddressOrDomainValidator extends BaseValidator {
+export class CkbAddressValidator extends BaseValidator {
     network: Environments;
 
     constructor(message: string | undefined, translate: TranslateFn, network: Environments) {
@@ -12,7 +12,6 @@ export class CkbAddressOrDomainValidator extends BaseValidator {
 
     validate(value: string): boolean {
         const isValid = ConnectionService.isAddress(this.network, value);
-        const isDomain = ConnectionService.isDomain(value);
-        return isValid || isDomain;
+        return isValid;
     }
 }

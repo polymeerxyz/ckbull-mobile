@@ -4,12 +4,13 @@ import { BitAccountRecordAddress } from "dotbit/lib/fetchers/BitIndexer.type";
 
 interface SelectAddressOfDomainProps {
     addresses: BitAccountRecordAddress[] | undefined;
-    onChange: (address: string) => void;
-    selected?: string;
+    onChange: (address: BitAccountRecordAddress) => void;
+    selected?: BitAccountRecordAddress;
 }
 
 const SelectAddressOfDomain = ({ addresses, onChange, selected }: SelectAddressOfDomainProps): JSX.Element => {
-    const handleOnPress = (address: string) => {
+    const handleOnPress = (address: BitAccountRecordAddress) => {
+        console.log("address", address);
         onChange(address);
     };
     return (
@@ -20,8 +21,8 @@ const SelectAddressOfDomain = ({ addresses, onChange, selected }: SelectAddressO
                         <SelectItemAddressOfDomain
                             key={index}
                             value={address.value}
-                            onPress={() => handleOnPress(address.value)}
-                            selected={selected || ""}
+                            onPress={() => handleOnPress(address)}
+                            selected={selected?.value || ""}
                         />
                     );
                 })}

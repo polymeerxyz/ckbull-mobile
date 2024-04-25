@@ -33,7 +33,6 @@ const SendSetAmountScreen = (): JSX.Element => {
         setSendState((oldState) => ({
             ...oldState,
             ...res,
-            receiverAddress: oldState.addressDomain ? oldState.addressDomain : oldState.receiverAddress,
         }));
         setTab(SendScreens.CONFIRMATION);
     };

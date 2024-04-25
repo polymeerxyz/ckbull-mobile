@@ -1,13 +1,13 @@
 import { atom } from "recoil";
 import { Asset, AssetType } from "module/wallet/wallet.types";
+import { BitAccountRecordAddress } from "dotbit/lib/fetchers/BitIndexer.type";
 
 export interface SendState {
     senderWalletIndex?: number;
-    receiverAddress?: string;
+    receiver?: string;
     amount?: string;
     message?: string;
-    domain?: string;
-    addressDomain?: string;
+    receiverDomainAddress?: BitAccountRecordAddress;
     asset: Asset;
 }
 

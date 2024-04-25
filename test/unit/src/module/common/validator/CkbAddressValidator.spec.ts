@@ -1,5 +1,5 @@
 import { Environments } from "module/sdk";
-import { CkbAddressValidator } from "config/validators/CkbAddressOrDomainValidator";
+import { CkbAddressValidator } from "config/validators/CkbAddressValidator";
 
 describe("CkbAddressValidator tests", () => {
     test("Address is correct", () => {

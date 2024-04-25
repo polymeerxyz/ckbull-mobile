@@ -6,7 +6,6 @@ import { SendScreens } from "module/transaction/component/core/SendModal/SendMod
 import { useRecoilState } from "recoil";
 import WalletSelector from "module/wallet/component/input/WalletSelector/WalletSelector";
 import useUncommittedTransaction from "module/transaction/hook/useUncommittedTransaction";
-import useSelectedNetwork from "module/settings/hook/useSelectedNetwork";
 import { useTranslate } from "module/common/hook/useTranslate";
 import QrScanner from "module/common/component/input/QrScanner/QrScanner";
 import TextFieldAddressOrDomain from "module/transaction/component/input/TextFieldAddressOrDomain/TextFieldAddressOrDomain";
@@ -19,14 +18,13 @@ export interface SendForm {
 const SendToAddressScreen = () => {
     const translate = useTranslate();
     const [sendState, setSendState] = useRecoilState(sendRecoilState);
-    const [receiverAddress, setReceiverAddress] = useState(sendState.receiverAddress || "");
+    const [receiverAddress, setReceiverAddress] = useState(sendState.receiver || "");
+    const [receiverDomainAddress, setReceiverDomainAddress] = useState(sendState.receiverDomainAddress || undefined);
     const [scanQr, setScanQr] = useState(false);
-    const [domain, setDomain] = useState("");
 
     const { showToast, hideToast } = useToast();
     const setTab = useSetTab();
     const uncommittedTransaction = useUncommittedTransaction();
-    const network = useSelectedNetwork();
 
     const handleAddressScan = (data: string) => {
         setReceiverAddress(data);
@@ -46,17 +44,17 @@ const SendToAddressScreen = () => {
     };
 
     const handleSubmit = ({ sender, receiver }: SendForm) => {
-        setSendState((oldState) => ({ ...oldState, senderWalletIndex: sender, receiverAddress: receiver }));
-        setTab(SendScreens.AMOUNT_AND_MESSAGE);
-    };
-
-    const handleChipAddressPress = (domain: string, sender: number) => {
         setSendState((oldState) => ({
             ...oldState,
-            domain,
-            senderWalletIndex: sender || 0,
+            senderWalletIndex: sender,
+            receiver: receiver,
+            receiverDomainAddress: receiverDomainAddress,
         }));
-        setTab(SendScreens.SELECT_ADDRESS);
+        if (receiverDomainAddress) {
+            setTab(SendScreens.SELECT_ADDRESS);
+        } else {
+            setTab(SendScreens.AMOUNT_AND_MESSAGE);
+        }
     };
 
     return (
@@ -74,16 +72,14 @@ const SendToAddressScreen = () => {
                         label={translate("send_to")}
                         placeholder={translate("address")}
                         name="receiver"
-                        validators={{ address: network }}
                         value={receiverAddress}
                         onChange={setReceiverAddress}
                         autoCapitalize="none"
                         autoCorrect={false}
                         style={{ component: { backgroundColor: "transparent" } }}
-                        domain={domain}
-                        onDomainChange={setDomain}
+                        domainAddress={receiverDomainAddress}
+                        onDomainAddressChange={setReceiverDomainAddress}
                         onScanQr={() => setScanQr(true)}
-                        onAddressDomainChipPress={handleChipAddressPress}
                     />
                     <Col gap="5%">
                         {uncommittedTransaction && (

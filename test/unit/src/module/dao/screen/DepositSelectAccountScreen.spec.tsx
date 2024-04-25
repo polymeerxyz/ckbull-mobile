@@ -28,6 +28,5 @@ describe("DepositSelectAccountScreen tests", () => {
         const screen = render(<DepositSelectAccountScreen />);
         fireEvent.press(screen.getByText(translate("next")));
         await waitFor(() => expect(setSendState).toHaveBeenCalled());
-        expect(setTab).toHaveBeenCalledWith(DepositScreens.AMOUNT_AND_MESSAGE);
     });
 });

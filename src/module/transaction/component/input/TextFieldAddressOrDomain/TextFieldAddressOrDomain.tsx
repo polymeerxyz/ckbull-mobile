@@ -1,55 +1,65 @@
 import { TextFieldProps } from "@peersyst/react-native-components";
 import TextField from "../../../../common/component/input/TextField/TextField";
-import { useControlled } from "@peersyst/react-hooks";
-import { useState } from "react";
-import useDomainValidator from "module/common/hook/useDomainValidator";
+import { useDebounce } from "@peersyst/react-hooks";
 import AddressOfDomainchip from "../../feedback/AddressOfDomainChip/AddressOfDomainChip";
+import useAddressValidator from "module/common/hook/useAddressValidator";
+import useGetAddressFromDomain from "module/common/hook/useGetAddressFromDomain";
+import { useTranslate } from "module/common/hook/useTranslate";
+import isDomain from "module/wallet/utils/isDomain";
+import { useEffect } from "react";
+import { BitAccountRecordAddress } from "dotbit/lib/fetchers/BitIndexer.type";
 
 export interface TextFieldAddressOrDomainProps extends TextFieldProps {
-    domain?: string;
-    onDomainChange?: (domain: string) => void;
+    domainAddress?: BitAccountRecordAddress;
+    onDomainAddressChange?: (domain: BitAccountRecordAddress | undefined) => void;
     onScanQr?: () => void;
-    onAddressDomainChipPress?: (domain: string, sender: number) => void;
 }
 
 const TextFieldAddressOrDomain = ({
     defaultValue = "",
-    value,
     onChange,
-    domain: domainProp,
-    onDomainChange: onDomainChangeProp,
     onScanQr,
-    onAddressDomainChipPress,
+    error,
+    domainAddress,
+    onDomainAddressChange,
     ...rest
 }: TextFieldAddressOrDomainProps): JSX.Element => {
-    const [address, setAddrees] = useControlled(defaultValue, value, onChange);
-    const [domain, setDomain] = useControlled("", domainProp, onDomainChangeProp);
-    const [isDomain, setIsDomain] = useState(false);
-    const validAddress = useDomainValidator();
+    const { value, handleChange, debouncedValue, debouncing } = useDebounce(defaultValue, { onChange });
+    const translateError = useTranslate("error");
+    const validAddress = useAddressValidator();
+    const isValidDomain = !value || isDomain(value);
+    const isValidAddress = !value || validAddress(value);
+    const { data: domainAddresses, isLoading } = useGetAddressFromDomain(debouncedValue, { enabled: isValidDomain });
 
-    const handleOnChange = (address: string) => {
-        const isDomain = validAddress(address);
-        if (isDomain) {
-            setIsDomain(true);
-            setDomain(address);
+    const loading = debouncing || isLoading;
+
+    function getError(): boolean | [boolean, string] | undefined {
+        if (loading) return true;
+        if (!isValidAddress) {
+            if (!isValidDomain) {
+                return [true, translateError("invalid_address")];
+            } else if (!domainAddresses || !domainAddresses.length) {
+                return [true, translateError("invalid_domain")];
+            }
+            return error;
         } else {
-            setIsDomain(false);
-            setAddrees(address);
+            return error;
         }
-    };
+    }
+
+    useEffect(() => {
+        if (domainAddresses) {
+            onDomainAddressChange?.(domainAddresses[0]);
+        }
+    }, [domainAddresses]);
+
     return (
         <TextField
-            value={domain ? domain : address}
-            onChange={handleOnChange}
+            value={value}
+            onChange={handleChange}
+            error={getError()}
             {...rest}
-            suffix={
-                <AddressOfDomainchip
-                    domain={domain}
-                    isDomain={isDomain}
-                    onScanQr={onScanQr}
-                    onAddressDomainChipPress={onAddressDomainChipPress}
-                />
-            }
+            suffix={<AddressOfDomainchip domainAddress={domainAddress} isLoading={loading} onScanQr={onScanQr} />}
         />
     );
 };

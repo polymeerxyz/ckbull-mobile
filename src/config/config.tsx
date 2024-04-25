@@ -10,7 +10,7 @@ import Button from "module/common/component/input/Button/Button";
 import { MinAmountValidator } from "./validators/MinAmountValidator";
 import { MinAmountFromDecimalsValidator } from "./validators/MinAmountFromDecimalsValidator";
 import { MaxAmountValidator } from "./validators/MaxAmountValidator";
-import { CkbAddressOrDomainValidator } from "./validators/CkbAddressOrDomainValidator";
+import { CkbAddressValidator } from "./validators/CkbAddressValidator";
 
 export const envConfigs: Record<string, CreateConfig> = {
     test: { ...baseConfig, ...devConfig },
@@ -102,7 +102,7 @@ const config = createConfig({
         dark: darkTheme,
     },
     validators: {
-        address: CkbAddressOrDomainValidator,
+        address: CkbAddressValidator,
         minAmount: MinAmountValidator,
         minAmountFromDecimals: MinAmountFromDecimalsValidator,
         maxAmount: MaxAmountValidator,

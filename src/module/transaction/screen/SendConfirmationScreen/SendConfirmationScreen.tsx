@@ -11,7 +11,7 @@ import CallbackModal from "module/common/component/feedback/SignModal/SignModal"
 
 const SendConfirmationScreen = (): JSX.Element => {
     const translate = useTranslate();
-    const { amount, senderWalletIndex, receiverAddress, message, asset } = useRecoilValue(sendState);
+    const { amount, senderWalletIndex, receiver, receiverDomainAddress, message, asset } = useRecoilValue(sendState);
     const {
         state: { wallets },
     } = useWalletState();
@@ -20,6 +20,8 @@ const SendConfirmationScreen = (): JSX.Element => {
     const { serviceInstance } = useServiceInstance(index);
     const { sendTransaction, ...restSendTransactionWithStatus } = useSend();
     const { hideModal } = useModal();
+
+    const receiverAddress = receiverDomainAddress ? receiverDomainAddress.value : receiver!;
 
     function closeSendModal() {
         hideModal(SendModal.id);

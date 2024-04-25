@@ -32,5 +32,6 @@
     "sign_in_request_already_signed": "Sign In request already signed",
     "transaction_request_already_signed": "Transaction request already signed",
     "transaction_request_already_declined": "Transaction request already declined",
-    "invalid_transaction": "Invalid transaction"
+    "invalid_transaction": "Invalid transaction",
+    "invalid_domain": "Domaine invalide"
 }

@@ -29,7 +29,7 @@ const SendModal = createBackdrop(({ onExited, ...rest }: ExposedBackdropProps) =
 
     const handleIndexChange = (index: SendScreens) => {
         setActiveIndex((oldIndex) => {
-            if (sendState.domain && index === SendScreens.AMOUNT_AND_MESSAGE) {
+            if (sendState.receiverDomainAddress && index === SendScreens.AMOUNT_AND_MESSAGE) {
                 return oldIndex - 1;
             } else {
                 if (index !== SendScreens.AMOUNT_AND_MESSAGE) {
@@ -48,7 +48,7 @@ const SendModal = createBackdrop(({ onExited, ...rest }: ExposedBackdropProps) =
                 title: translate("send")!,
                 onBack: activeIndex > 0 ? () => handleIndexChange(activeIndex) : undefined,
                 steps: {
-                    length: 4,
+                    length: sendState.receiverDomainAddress ? 4 : 3,
                     index: activeIndex,
                 },
             }}
