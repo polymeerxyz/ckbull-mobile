@@ -10,7 +10,6 @@ interface SelectAddressOfDomainProps {
 
 const SelectAddressOfDomain = ({ addresses, onChange, selected }: SelectAddressOfDomainProps): JSX.Element => {
     const handleOnPress = (address: BitAccountRecordAddress) => {
-        console.log("address", address);
         onChange(address);
     };
     return (
