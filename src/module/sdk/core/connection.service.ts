@@ -37,7 +37,7 @@ const OnepassConfig: { [key in Environments]: ScriptConfig } = {
     },
 };
 
-const OmnilockConfig: { [key in Environments]: ScriptConfig } = {
+const OldOmnilockConfig: { [key in Environments]: ScriptConfig } = {
     [Environments.Mainnet]: {
         CODE_HASH: "0x9b819793a64463aed77c615d6cb226eea5487ccfc0783043a587254cda2b6f26",
         HASH_TYPE: "type",
@@ -49,6 +49,23 @@ const OmnilockConfig: { [key in Environments]: ScriptConfig } = {
         CODE_HASH: "0xf329effd1c475a2978453c8600e1eaf0bc2087ee093c3ee64cc96ec6847752cb",
         HASH_TYPE: "type",
         TX_HASH: "0x27b62d8be8ed80b9f56ee0fe41355becdb6f6a40aeba82d3900434f43b1c8b60",
+        INDEX: "0x0",
+        DEP_TYPE: "code",
+    },
+};
+
+const NewOmnilockConfig: { [key in Environments]: ScriptConfig } = {
+    [Environments.Mainnet]: {
+        CODE_HASH: "0x9f3aeaf2fc439549cbc870c653374943af96a0658bd6b51be8d8983183e6f52f",
+        HASH_TYPE: "type",
+        TX_HASH: "0xaa8ab7e97ed6a268be5d7e26d63d115fa77230e51ae437fc532988dd0c3ce10a",
+        INDEX: "0x1",
+        DEP_TYPE: "code",
+    },
+    [Environments.Testnet]: {
+        CODE_HASH: "0x79f90bb5e892d80dd213439eeab551120eb417678824f282b4ffb5f21bad2e1e",
+        HASH_TYPE: "type",
+        TX_HASH: "0x9154df4f7336402114d04495175b37390ce86a4906d2d4001cf02c3e6d97f39c",
         INDEX: "0x0",
         DEP_TYPE: "code",
     },
@@ -219,9 +236,18 @@ export class ConnectionService {
         return lock.codeHash === OnepassConfig[this.env].CODE_HASH && lock.hashType === OnepassConfig[this.env].HASH_TYPE;
     }
 
-    isOmnilockAddress(address: string): boolean {
+    isNewOmnilockAddress(address: string): boolean {
         const lock = this.getLockFromAddress(address);
-        return lock.codeHash === OmnilockConfig[this.env].CODE_HASH && lock.hashType === OmnilockConfig[this.env].HASH_TYPE;
+        return lock.codeHash === NewOmnilockConfig[this.env].CODE_HASH && lock.hashType === NewOmnilockConfig[this.env].HASH_TYPE;
+    }
+
+    isOldOmnilockAddress(address: string): boolean {
+        const lock = this.getLockFromAddress(address);
+        return lock.codeHash === OldOmnilockConfig[this.env].CODE_HASH && lock.hashType === OldOmnilockConfig[this.env].HASH_TYPE;
+    }
+
+    isOmnilockAddress(address: string): boolean {
+        return this.isNewOmnilockAddress(address) || this.isOldOmnilockAddress(address);
     }
 
     isPwlockK1AcplAddress(address: string): boolean {
@@ -251,10 +277,18 @@ export class ConnectionService {
         return lock.codeHash === OnepassConfig[network].CODE_HASH && lock.hashType === OnepassConfig[network].HASH_TYPE;
     }
 
+    static isNewOmnilockAddress(network: Environments, lock: Script): boolean {
+        return lock.codeHash === OldOmnilockConfig[network].CODE_HASH && lock.hashType === OldOmnilockConfig[network].HASH_TYPE;
+    }
+
+    static isOldOmnilockAddress(network: Environments, lock: Script): boolean {
+        return lock.codeHash === OldOmnilockConfig[network].CODE_HASH && lock.hashType === OldOmnilockConfig[network].HASH_TYPE;
+    }
+
     static isOmnilockAddress(network: Environments, address: string): boolean {
         const config = network === Environments.Mainnet ? LINA : AGGRON4;
         const lock = ConnectionService.getLockFromAddress(address, config);
-        return lock.codeHash === OmnilockConfig[network].CODE_HASH && lock.hashType === OmnilockConfig[network].HASH_TYPE;
+        return ConnectionService.isNewOmnilockAddress(network, lock) || ConnectionService.isOldOmnilockAddress(network, lock);
     }
 
     static isPwlockK1AcplAddress(network: Environments, address: string): boolean {
