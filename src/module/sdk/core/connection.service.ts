@@ -267,7 +267,7 @@ export class ConnectionService {
 
     static async getAddressFromDomain(domain: string): Promise<BitAccountRecordAddress[]> {
         const dotbit = createInstance();
-        return await dotbit.addresses(domain);
+        return await dotbit.addresses(domain, "ckb");
     }
 
     static isOnepassAddress(network: Environments, address: string): boolean {
