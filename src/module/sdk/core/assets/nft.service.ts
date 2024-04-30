@@ -268,8 +268,7 @@ export class NftService {
         }
         let txSkeleton = TransactionSkeleton({ cellProvider: this.connection.getCellProvider() });
 
-        // Add token deps
-        txSkeleton = this.transactionService.addSecp256CellDep(txSkeleton);
+        // Add nft deps
         if (nft.script.codeHash === this.getMNftConfig().codeHash) {
             // Add mnft code deps
             txSkeleton = this.addCellDepFromNftConfig(txSkeleton, this.getMNftConfig());

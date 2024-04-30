@@ -241,7 +241,6 @@ export class DAOService {
         });
 
         // Inject capacity
-        txSkeleton = this.transactionService.addSecp256CellDep(txSkeleton);
         txSkeleton = this.transactionService.injectCapacity(txSkeleton, amount, cells);
 
         // Pay fee

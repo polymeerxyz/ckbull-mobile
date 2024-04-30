@@ -1,4 +1,4 @@
-import { TokenType as TokenSDKType } from "ckb-peersyst-sdk";
+import { TokenKind, TokenType as TokenSDKType } from "ckb-peersyst-sdk";
 
 export type ApiIdType = "usd-coin" | "binancecoin" | "ethereum" | "tether" | "wrapped-bitcoin" | "nervos-network";
 
@@ -8,7 +8,8 @@ export interface TokenType extends TokenSDKType {
     name: string;
     description: string;
     decimals: number;
-    apiId: ApiIdType;
+    kind: TokenKind;
+    apiId?: ApiIdType;
 }
 
 export interface TokenAmount {
