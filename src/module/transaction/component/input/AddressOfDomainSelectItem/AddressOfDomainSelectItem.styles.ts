@@ -1,7 +1,7 @@
 import styled from "@peersyst/react-native-styled";
 import BlockchainAddress, { BlockchainAddressProps } from "module/common/component/display/BlockchainAddress/BlockchainAddress";
 
-export const SelectItemAddressOfDomainItem = styled(BlockchainAddress)<BlockchainAddressProps & { isActive: boolean }>(
+export const BaseAddressOfDomainSelectItem = styled(BlockchainAddress)<BlockchainAddressProps & { isActive: boolean }>(
     ({ theme, isActive }) => ({
         paddingVertical: 16,
         paddingHorizontal: 20,

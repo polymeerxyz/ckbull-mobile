@@ -22,6 +22,8 @@ export enum Environments {
     Testnet = "testnet",
 }
 
+export const CKB_SYMBOL = "ckb";
+
 const OnepassConfig: { [key in Environments]: ScriptConfig } = {
     [Environments.Mainnet]: {
         CODE_HASH: "0xd01f5152c267b7f33b9795140c2467742e8424e49ebe2331caec197f7281b60a",
@@ -262,12 +264,12 @@ export class ConnectionService {
     static domainExistFromBit(domain: string): boolean {
         const dotbit = createInstance();
         const account = dotbit.account(domain);
-        return account.status === 0 ? true : false;
+        return account.status === 0;
     }
 
     static async getAddressFromDomain(domain: string): Promise<BitAccountRecordAddress[]> {
         const dotbit = createInstance();
-        return await dotbit.addresses(domain, "ckb");
+        return await dotbit.addresses(domain, CKB_SYMBOL);
     }
 
     static isOnepassAddress(network: Environments, address: string): boolean {

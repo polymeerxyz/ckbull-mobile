@@ -3,10 +3,10 @@ import { useTranslate } from "module/common/hook/useTranslate";
 import { useRecoilState } from "recoil";
 import sendRecoilState from "module/transaction/state/SendState";
 import useGetAddressFromDomain from "module/common/hook/useGetAddressFromDomain";
-import SelectAddressOfDomain from "module/transaction/component/input/SelectAddressOfDomain/SelectAddressOfDomain";
 import Button from "module/common/component/input/Button/Button";
 import { SendScreens } from "module/transaction/component/core/SendModal/SendModal";
 import { BitAccountRecordAddress } from "dotbit/lib/fetchers/BitIndexer.type";
+import AddressOfDomainSelect from "module/transaction/component/input/AddressOfDomainSelect/AddressOfDomainSelect";
 
 const SendSelectAddressScreen = () => {
     const translate = useTranslate();
@@ -31,7 +31,7 @@ const SendSelectAddressScreen = () => {
                 {translate("selectAddressOfDomain", { count: addresses?.length, domain: sendState.receiver })}
             </Typography>
             {isLoading && <Spinner />}
-            <SelectAddressOfDomain addresses={addresses} onChange={handleSelectAddress} selected={sendState.receiverDomainAddress} />
+            <AddressOfDomainSelect addresses={addresses} onChange={handleSelectAddress} selected={sendState.receiverDomainAddress} />
             <Button variant="primary" fullWidth disabled={sendState.receiverDomainAddress === undefined} onPress={handleNext}>
                 {translate("next")}
             </Button>

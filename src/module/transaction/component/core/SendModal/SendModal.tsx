@@ -27,7 +27,7 @@ const SendModal = createBackdrop(({ onExited, ...rest }: ExposedBackdropProps) =
         resetSendState();
     };
 
-    const handleIndexChange = (index: SendScreens) => {
+    const handleIndexChange = (index: SendScreens): ReturnType<typeof setActiveIndex> => {
         setActiveIndex((oldIndex) => {
             if (sendState.receiverDomainAddress && index === SendScreens.AMOUNT_AND_MESSAGE) {
                 return oldIndex - 1;

@@ -1,32 +1,34 @@
-import { IconButton, Row, Spinner, useTheme } from "@peersyst/react-native-components";
+import { Row, Spinner } from "@peersyst/react-native-components";
 import Chip from "module/common/component/display/Chip/Chip";
-import { BlockchainAddressByDomain } from "./AddressOfDomainChip.styles";
+import { AddressOfDomainChipIconButton, BlockchainAddressByDomain } from "./AddressOfDomainChip.styles";
 import { CameraIcon } from "icons";
 import { BitAccountRecordAddress } from "dotbit/lib/fetchers/BitIndexer.type";
+import settingsState from "module/settings/state/SettingsState";
+import { useRecoilState } from "recoil";
 
-export interface AddressOfDomainchipProps {
+export interface AddressOfDomainChipProps {
     isLoading?: boolean;
     onScanQr?: () => void;
     domainAddress?: BitAccountRecordAddress | undefined;
 }
 
-const AddressOfDomainchip = ({ onScanQr, isLoading, domainAddress }: AddressOfDomainchipProps): JSX.Element => {
-    const { palette } = useTheme();
-
+const AddressOfDomainChip = ({ onScanQr, isLoading, domainAddress }: AddressOfDomainChipProps): JSX.Element => {
+    const [settings] = useRecoilState(settingsState);
+    const isMainnet = settings.network === "mainnet";
     return (
         <Row gap={4}>
             {isLoading && <Spinner />}
-            {domainAddress && (
+            {domainAddress && isMainnet && (
                 <Chip
                     variant="tertiary"
                     label={<BlockchainAddressByDomain address={domainAddress.value} type="address" variant="body3Regular" length={3} />}
                 />
             )}
-            <IconButton style={{ color: palette.primary, fontSize: 24 }} onPress={onScanQr}>
+            <AddressOfDomainChipIconButton onPress={onScanQr}>
                 <CameraIcon />
-            </IconButton>
+            </AddressOfDomainChipIconButton>
         </Row>
     );
 };
 
-export default AddressOfDomainchip;
+export default AddressOfDomainChip;

@@ -2,7 +2,7 @@ import { AppCurrency } from "module/wallet/component/display/Balance/Balance.typ
 import BaseMock from "../base.mock";
 import { MOCKED_ADDRESS } from "../wallet";
 import { AssetMock } from "../wallet/asset.mock";
-import { BitAccountRecordAddressMock } from "../wallet/as.mock";
+import { BitAccountRecordAddressMock } from "../wallet/bitAccountRecordAddressMock.mock";
 
 export interface ISendStateMock {
     senderWalletIndex?: number;

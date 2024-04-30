@@ -8,7 +8,7 @@ import WalletSelector from "module/wallet/component/input/WalletSelector/WalletS
 import useUncommittedTransaction from "module/transaction/hook/useUncommittedTransaction";
 import { useTranslate } from "module/common/hook/useTranslate";
 import QrScanner from "module/common/component/input/QrScanner/QrScanner";
-import TextFieldAddressOrDomain from "module/transaction/component/input/TextFieldAddressOrDomain/TextFieldAddressOrDomain";
+import AddressOfDomainTextField from "module/transaction/component/input/TextFieldAddressOrDomain/TextFieldAddressOrDomain";
 
 export interface SendForm {
     sender: number;
@@ -68,7 +68,7 @@ const SendToAddressScreen = () => {
                         onChange={handleSenderChange}
                         defaultValue={sendState.senderWalletIndex}
                     />
-                    <TextFieldAddressOrDomain
+                    <AddressOfDomainTextField
                         label={translate("send_to")}
                         placeholder={translate("address")}
                         name="receiver"

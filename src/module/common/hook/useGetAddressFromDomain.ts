@@ -16,8 +16,7 @@ const useGetAddressFromDomain = (
         [Queries.GET_ADDRESS_FROM_DOMAIN, domain],
         async () => {
             try {
-                const addresses = await ConnectionService.getAddressFromDomain(domain!);
-                return addresses;
+                return await ConnectionService.getAddressFromDomain(domain!);
             } catch (error) {
                 return [];
             }

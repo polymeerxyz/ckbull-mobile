@@ -11,7 +11,6 @@ export class CkbAddressValidator extends BaseValidator {
     }
 
     validate(value: string): boolean {
-        const isValid = ConnectionService.isAddress(this.network, value);
-        return isValid;
+        return ConnectionService.isAddress(this.network, value);
     }
 }
