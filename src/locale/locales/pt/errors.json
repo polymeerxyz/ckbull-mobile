@@ -33,5 +33,5 @@
     "transaction_request_already_signed": "Pedido de transação já assinado",
     "transaction_request_already_declined": "Pedido de transação já recusado",
     "invalid_transaction": "Transação inválida",
-    "invalid_domain": "Domínio inválido"
+    "invalid_domain": "Dominio inválido"
 }

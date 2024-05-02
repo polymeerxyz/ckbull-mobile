@@ -8,7 +8,7 @@ import WalletSelector from "module/wallet/component/input/WalletSelector/WalletS
 import useUncommittedTransaction from "module/transaction/hook/useUncommittedTransaction";
 import { useTranslate } from "module/common/hook/useTranslate";
 import QrScanner from "module/common/component/input/QrScanner/QrScanner";
-import AddressOfDomainTextField from "module/transaction/component/input/TextFieldAddressOrDomain/TextFieldAddressOrDomain";
+import AddressOfDomainTextField from "module/transaction/component/input/AddressOfDomainTextField/AddressOfDomainTextField";
 
 export interface SendForm {
     sender: number;

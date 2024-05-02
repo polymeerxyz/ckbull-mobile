@@ -13,6 +13,7 @@ import { Config, ScriptConfig } from "@ckb-lumos/config-manager";
 import { isSecp256k1Blake160Address, isAcpAddress, isSecp256k1Blake160MultisigAddress } from "@ckb-lumos/common-scripts/lib/helper";
 import { createInstance } from "dotbit";
 import { BitAccountRecordAddress } from "dotbit/lib/fetchers/BitIndexer.type";
+import { CKB_SYMBOL } from "../constants";
 
 // AGGRON4 for test, LINA for main
 const { AGGRON4, LINA } = config.predefined;
@@ -21,8 +22,6 @@ export enum Environments {
     Mainnet = "mainnet",
     Testnet = "testnet",
 }
-
-export const CKB_SYMBOL = "ckb";
 
 const OnepassConfig: { [key in Environments]: ScriptConfig } = {
     [Environments.Mainnet]: {
