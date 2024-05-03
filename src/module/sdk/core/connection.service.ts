@@ -108,7 +108,7 @@ export class ConnectionService {
     }
 
     async getBlockchainInfo(): Promise<ChainInfo> {
-        return this.rpc.get_blockchain_info();
+        return this.rpc.getBlockchainInfo();
     }
 
     setBlockHeaderMaps(header: Header): void {
@@ -117,14 +117,14 @@ export class ConnectionService {
     }
 
     async getCurrentBlockHeader(): Promise<Header> {
-        const lastBlockHeader = await this.rpc.get_tip_header();
+        const lastBlockHeader = await this.rpc.getTipHeader();
         this.setBlockHeaderMaps(lastBlockHeader);
         return lastBlockHeader;
     }
 
     async getBlockHeaderFromHash(blockHash: string): Promise<Header> {
         if (!this.blockHeaderHashMap.has(blockHash)) {
-            const header = await this.rpc.get_header(blockHash);
+            const header = await this.rpc.getHeader(blockHash);
             this.setBlockHeaderMaps(header!);
         }
         return this.blockHeaderHashMap.get(blockHash)!;
@@ -132,19 +132,19 @@ export class ConnectionService {
 
     async getBlockHeaderFromNumber(blockNumber: string): Promise<Header> {
         if (!this.blockHeaderNumberMap.has(blockNumber)) {
-            const header = await this.rpc.get_header_by_number(blockNumber);
+            const header = await this.rpc.getHeaderByNumber(blockNumber);
             this.setBlockHeaderMaps(header!);
         }
         return this.blockHeaderNumberMap.get(blockNumber)!;
     }
 
     async getCell(outPoint: OutPoint): Promise<CellWithStatus> {
-        return this.rpc.get_live_cell(outPoint, true);
+        return this.rpc.getLiveCell(outPoint, true);
     }
 
     async getTransactionFromHash(transactionHash: string, useMap = true): Promise<TransactionWithStatus> {
         if (!useMap || !this.transactionMap.has(transactionHash)) {
-            const transaction = await this.rpc.get_transaction(transactionHash);
+            const transaction = await this.rpc.getTransaction(transactionHash);
             this.transactionMap.set(transactionHash, transaction!);
         }
         return this.transactionMap.get(transactionHash)!;
@@ -154,7 +154,7 @@ export class ConnectionService {
         return this.config;
     }
 
-    getConfigAsObject(): helpers.Options {
+    getConfigAsObject(): any {
         return { config: this.config };
     }
 
@@ -216,17 +216,17 @@ export class ConnectionService {
 
     isOnepassAddress(address: string): boolean {
         const lock = this.getLockFromAddress(address);
-        return lock.code_hash === OnepassConfig[this.env].CODE_HASH && lock.hash_type === OnepassConfig[this.env].HASH_TYPE;
+        return lock.codeHash === OnepassConfig[this.env].CODE_HASH && lock.hashType === OnepassConfig[this.env].HASH_TYPE;
     }
 
     isOmnilockAddress(address: string): boolean {
         const lock = this.getLockFromAddress(address);
-        return lock.code_hash === OmnilockConfig[this.env].CODE_HASH && lock.hash_type === OmnilockConfig[this.env].HASH_TYPE;
+        return lock.codeHash === OmnilockConfig[this.env].CODE_HASH && lock.hashType === OmnilockConfig[this.env].HASH_TYPE;
     }
 
     isPwlockK1AcplAddress(address: string): boolean {
         const lock = this.getLockFromAddress(address);
-        return lock.code_hash === PwlockK1AcplConfig[this.env].CODE_HASH && lock.hash_type === PwlockK1AcplConfig[this.env].HASH_TYPE;
+        return lock.codeHash === PwlockK1AcplConfig[this.env].CODE_HASH && lock.hashType === PwlockK1AcplConfig[this.env].HASH_TYPE;
     }
 
     static isAddress(network: Environments, address: string): boolean {
@@ -248,18 +248,18 @@ export class ConnectionService {
     static isOnepassAddress(network: Environments, address: string): boolean {
         const config = network === Environments.Mainnet ? LINA : AGGRON4;
         const lock = ConnectionService.getLockFromAddress(address, config);
-        return lock.code_hash === OnepassConfig[network].CODE_HASH && lock.hash_type === OnepassConfig[network].HASH_TYPE;
+        return lock.codeHash === OnepassConfig[network].CODE_HASH && lock.hashType === OnepassConfig[network].HASH_TYPE;
     }
 
     static isOmnilockAddress(network: Environments, address: string): boolean {
         const config = network === Environments.Mainnet ? LINA : AGGRON4;
         const lock = ConnectionService.getLockFromAddress(address, config);
-        return lock.code_hash === OmnilockConfig[network].CODE_HASH && lock.hash_type === OmnilockConfig[network].HASH_TYPE;
+        return lock.codeHash === OmnilockConfig[network].CODE_HASH && lock.hashType === OmnilockConfig[network].HASH_TYPE;
     }
 
     static isPwlockK1AcplAddress(network: Environments, address: string): boolean {
         const config = network === Environments.Mainnet ? LINA : AGGRON4;
         const lock = ConnectionService.getLockFromAddress(address, config);
-        return lock.code_hash === PwlockK1AcplConfig[network].CODE_HASH && lock.hash_type === PwlockK1AcplConfig[network].HASH_TYPE;
+        return lock.codeHash === PwlockK1AcplConfig[network].CODE_HASH && lock.hashType === PwlockK1AcplConfig[network].HASH_TYPE;
     }
 }
