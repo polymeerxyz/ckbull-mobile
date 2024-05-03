@@ -1,6 +1,6 @@
 export * from "expo-crypto";
 const expoCrypto = require("expo-crypto");
-const CrytpoPolyfill = {
+const CrypoPolyfill = {
     ...expoCrypto,
     createHash: require("create-hash"),
     randomBytes: (n: number) => {
@@ -11,4 +11,4 @@ const CrytpoPolyfill = {
     createHmac: require("create-hmac"),
 };
 
-export default CrytpoPolyfill;
+export default CrypoPolyfill;
