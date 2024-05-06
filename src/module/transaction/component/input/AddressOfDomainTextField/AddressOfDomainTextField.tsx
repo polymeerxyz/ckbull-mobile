@@ -2,7 +2,6 @@ import { TextFieldProps } from "@peersyst/react-native-components";
 import TextField from "../../../../common/component/input/TextField/TextField";
 import { useDebounce } from "@peersyst/react-hooks";
 import AddressOfDomainChip from "../../feedback/AddressOfDomainChip/AddressOfDomainChip";
-import useAddressValidator from "module/common/hook/useAddressValidator";
 import useGetAddressFromDomain from "module/common/hook/useGetAddressFromDomain";
 import { useTranslate } from "module/common/hook/useTranslate";
 import isDomain from "module/wallet/utils/isDomain";
@@ -10,6 +9,7 @@ import { useEffect } from "react";
 import { BitAccountRecordAddress } from "dotbit/lib/fetchers/BitIndexer.type";
 import { useRecoilState } from "recoil";
 import settingsState from "module/settings/state/SettingsState";
+import { ConnectionService, Environments } from "module/sdk/core/connection.service";
 
 export interface AddressOfDomainTextFieldProps extends TextFieldProps {
     domainAddress?: BitAccountRecordAddress;
@@ -29,9 +29,8 @@ const AddressOfDomainTextField = ({
     const { value, handleChange, debouncedValue, debouncing } = useDebounce(defaultValue, { onChange });
     const [settings] = useRecoilState(settingsState);
     const translateError = useTranslate("error");
-    const validAddress = useAddressValidator();
-    const isValidDomain = !value || isDomain(value);
-    const isValidAddress = !value || validAddress(value);
+    const isValidDomain = value !== "" || isDomain(value);
+    const isValidAddress = value !== "" || ConnectionService.isAddress(settings.network as Environments, value);
     const { data: domainAddresses, isLoading } = useGetAddressFromDomain(debouncedValue, { enabled: isValidDomain });
     const loading = debouncing || isLoading;
     const isMainnet = settings.network === "mainnet";
