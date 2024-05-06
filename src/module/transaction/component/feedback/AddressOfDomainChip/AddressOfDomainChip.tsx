@@ -3,22 +3,19 @@ import Chip from "module/common/component/display/Chip/Chip";
 import { AddressOfDomainChipIconButton, BlockchainAddressByDomain } from "./AddressOfDomainChip.styles";
 import { CameraIcon } from "icons";
 import { BitAccountRecordAddress } from "dotbit/lib/fetchers/BitIndexer.type";
-import settingsState from "module/settings/state/SettingsState";
-import { useRecoilState } from "recoil";
 
 export interface AddressOfDomainChipProps {
     isLoading?: boolean;
     onScanQr?: () => void;
     domainAddress?: BitAccountRecordAddress | undefined;
+    isError?: boolean;
 }
 
-const AddressOfDomainChip = ({ onScanQr, isLoading, domainAddress }: AddressOfDomainChipProps): JSX.Element => {
-    const [settings] = useRecoilState(settingsState);
-    const isMainnet = settings.network === "mainnet";
+const AddressOfDomainChip = ({ onScanQr, isLoading, domainAddress, isError = false }: AddressOfDomainChipProps): JSX.Element => {
     return (
         <Row gap={4}>
             {isLoading && <Spinner />}
-            {domainAddress && isMainnet && (
+            {!isError && domainAddress && (
                 <Chip
                     variant="tertiary"
                     label={<BlockchainAddressByDomain address={domainAddress.value} type="address" variant="body3Regular" length={3} />}

@@ -29,11 +29,11 @@ const AddressOfDomainTextField = ({
     const { value, handleChange, debouncedValue, debouncing } = useDebounce(defaultValue, { onChange });
     const [settings] = useRecoilState(settingsState);
     const translateError = useTranslate("error");
-    const isValidDomain = value !== "" || isDomain(value);
-    const isValidAddress = value !== "" || ConnectionService.isAddress(settings.network as Environments, value);
-    const { data: domainAddresses, isLoading } = useGetAddressFromDomain(debouncedValue, { enabled: isValidDomain });
-    const loading = debouncing || isLoading;
+    const isValidDomain = value === "" || isDomain(value);
+    const isValidAddress = value === "" || ConnectionService.isAddress(settings.network as Environments, value);
     const isMainnet = settings.network === "mainnet";
+    const { data: domainAddresses, isLoading } = useGetAddressFromDomain(debouncedValue, { enabled: isValidDomain && isMainnet });
+    const loading = debouncing || isLoading;
 
     function getError(): boolean | [boolean, string] | undefined {
         if (loading) return true;
@@ -59,13 +59,22 @@ const AddressOfDomainTextField = ({
         }
     }, [domainAddresses]);
 
+    const isError = getError();
+
     return (
         <TextField
             value={value}
             onChange={handleChange}
-            error={getError()}
+            error={isError}
             {...rest}
-            suffix={<AddressOfDomainChip domainAddress={domainAddress} isLoading={loading} onScanQr={onScanQr} />}
+            suffix={
+                <AddressOfDomainChip
+                    domainAddress={domainAddress}
+                    isLoading={loading}
+                    onScanQr={onScanQr}
+                    isError={typeof isError === "boolean" ? isError : Array.isArray(isError) ? isError[0] : false}
+                />
+            }
         />
     );
 };
