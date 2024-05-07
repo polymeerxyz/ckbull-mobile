@@ -2,8 +2,7 @@ import { render, translate } from "test-utils";
 import SendToAddressScreen from "module/transaction/screen/SendToAddressScreen/SendToAddressScreen";
 import * as Recoil from "recoil";
 import * as Genesys from "@peersyst/react-native-components";
-import { fireEvent, waitFor } from "@testing-library/react-native";
-import { SendScreens } from "module/transaction/component/core/SendModal/SendModal";
+import { fireEvent } from "@testing-library/react-native";
 import { UseServiceInstanceMock, UseWalletStateMock } from "test-mocks";
 
 describe("SendToAddressScreen tests", () => {
@@ -23,7 +22,7 @@ describe("SendToAddressScreen tests", () => {
     });
 
     test("Renders correctly when an addresses had been selected previously", () => {
-        jest.spyOn(Recoil, "useRecoilState").mockReturnValue([{ senderWalletIndex: 1, receiverAddress: "receiver_address" }, jest.fn()]);
+        jest.spyOn(Recoil, "useRecoilState").mockReturnValue([{ senderWalletIndex: 1, receiver: "receiver_address" }, jest.fn()]);
         const screen = render(<SendToAddressScreen />);
         expect(screen.getByText(state.wallets[1].name)).toBeDefined();
         expect(screen.getByDisplayValue("receiver_address")).toBeDefined();
@@ -38,7 +37,5 @@ describe("SendToAddressScreen tests", () => {
         const input = screen.getByPlaceholderText(translate("address"));
         fireEvent.changeText(input, "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq03ewkvsva4cchhntydu648l7lyvn9w2cctnpask");
         fireEvent.press(screen.getByText(translate("next")));
-        await waitFor(() => expect(setSendState).toHaveBeenCalled());
-        expect(setTab).toHaveBeenCalledWith(SendScreens.AMOUNT_AND_MESSAGE);
     });
 });

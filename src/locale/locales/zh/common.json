@@ -225,5 +225,6 @@
     "purchase": "购买",
     "edit": "编辑",
     "purchaseCompleted": "购买完成!",
-    "orderCompletedText": "请记住，您的账户余额将需要几分钟才能反映出新的金额。"
+    "orderCompletedText": "请记住，您的账户余额将需要几分钟才能反映出新的金额。",
+    "selectAddressOfDomain": "在{{domain}}地址下检测到{{count}}个CKB地址："
 }

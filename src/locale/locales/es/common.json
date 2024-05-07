@@ -225,5 +225,6 @@
     "purchase": "Comprar",
     "edit": "Editar",
     "purchaseCompleted": "Compra completada!",
-    "orderCompletedText": "Recuerda que tomará unos minutos para que el saldo de tu cuenta refleje tu nuevo balance."
+    "orderCompletedText": "Recuerda que tomará unos minutos para que el saldo de tu cuenta refleje tu nuevo balance.",
+    "selectAddressOfDomain": "{{count}} direcciones CKB detectadas bajo la dirección {{domain}}:"
 }
