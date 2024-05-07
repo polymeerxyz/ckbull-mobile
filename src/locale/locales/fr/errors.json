@@ -29,8 +29,9 @@
     "no_tokens": "Il n'y a pas encore de jetons",
     "no_deposits": "Sans dépôts",
     "no_withdrawals": "Sans retraits",
-    "sign_in_request_already_signed": "Sign In request already signed",
-    "transaction_request_already_signed": "Transaction request already signed",
-    "transaction_request_already_declined": "Transaction request already declined",
-    "invalid_transaction": "Invalid transaction"
+    "sign_in_request_already_signed": "Demande de connexion déjà signée",
+    "transaction_request_already_signed": "Demande de transaction déjà signée",
+    "transaction_request_already_declined": "Demande de transaction déjà refusée",
+    "invalid_transaction": "Transaction invalide",
+    "invalid_domain": "Domaine invalide"
 }

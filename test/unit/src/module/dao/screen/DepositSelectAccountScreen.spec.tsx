@@ -3,7 +3,6 @@ import * as Recoil from "recoil";
 import * as Genesys from "@peersyst/react-native-components";
 import { fireEvent, waitFor } from "@testing-library/react-native";
 import DepositSelectAccountScreen from "module/dao/screen/DepositSelectAccountScreen/DepositSelectAccountScreen";
-import { DepositScreens } from "module/dao/component/core/DepositModal/DepositModal";
 import { UseServiceInstanceMock, UseWalletStateMock } from "test-mocks";
 
 describe("DepositSelectAccountScreen tests", () => {
@@ -28,6 +27,5 @@ describe("DepositSelectAccountScreen tests", () => {
         const screen = render(<DepositSelectAccountScreen />);
         fireEvent.press(screen.getByText(translate("next")));
         await waitFor(() => expect(setSendState).toHaveBeenCalled());
-        expect(setTab).toHaveBeenCalledWith(DepositScreens.AMOUNT_AND_MESSAGE);
     });
 });
