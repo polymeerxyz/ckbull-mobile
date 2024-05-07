@@ -10,7 +10,12 @@ import {
     QueryOptions,
 } from "@ckb-lumos/base";
 import { Config, ScriptConfig } from "@ckb-lumos/config-manager";
-import { isSecp256k1Blake160Address, isAcpAddress, isSecp256k1Blake160MultisigAddress } from "@ckb-lumos/common-scripts/lib/helper";
+import {
+    isSecp256k1Blake160Address,
+    isAcpAddress,
+    isSecp256k1Blake160MultisigAddress,
+    isOmnilockAddress,
+} from "@ckb-lumos/common-scripts/lib/helper";
 import { createInstance } from "dotbit";
 import { BitAccountRecordAddress } from "dotbit/lib/fetchers/BitIndexer.type";
 import { CKB_SYMBOL } from "../constants";
@@ -40,24 +45,7 @@ const OnepassConfig: { [key in Environments]: ScriptConfig } = {
     },
 };
 
-const OldOmnilockConfig: { [key in Environments]: ScriptConfig } = {
-    [Environments.Mainnet]: {
-        CODE_HASH: "0x9b819793a64463aed77c615d6cb226eea5487ccfc0783043a587254cda2b6f26",
-        HASH_TYPE: "type",
-        TX_HASH: "0xc76edf469816aa22f416503c38d0b533d2a018e253e379f134c3985b3472c842",
-        INDEX: "0x0",
-        DEP_TYPE: "code",
-    },
-    [Environments.Testnet]: {
-        CODE_HASH: "0xf329effd1c475a2978453c8600e1eaf0bc2087ee093c3ee64cc96ec6847752cb",
-        HASH_TYPE: "type",
-        TX_HASH: "0xec18bf0d857c981c3d1f4e17999b9b90c484b303378e94de1a57b0872f5d4602",
-        INDEX: "0x0",
-        DEP_TYPE: "code",
-    },
-};
-
-const NewOmnilockConfig: { [key in Environments]: ScriptConfig } = {
+const ForceBridgeConfig: { [key in Environments]: ScriptConfig } = {
     [Environments.Mainnet]: {
         CODE_HASH: "0x9f3aeaf2fc439549cbc870c653374943af96a0658bd6b51be8d8983183e6f52f",
         HASH_TYPE: "type",
@@ -70,6 +58,23 @@ const NewOmnilockConfig: { [key in Environments]: ScriptConfig } = {
         HASH_TYPE: "type",
         TX_HASH: "0x9154df4f7336402114d04495175b37390ce86a4906d2d4001cf02c3e6d97f39c",
         INDEX: "0x0",
+        DEP_TYPE: "code",
+    },
+};
+
+const BitConfig: { [key in Environments]: ScriptConfig } = {
+    [Environments.Mainnet]: {
+        CODE_HASH: "0x9376c3b5811942960a846691e16e477cf43d7c7fa654067c9948dfcd09a32137",
+        HASH_TYPE: "type",
+        TX_HASH: "0x440acccb5495e3395c72a8006d384c28840f41df471ef0423475e66f8717cfe4",
+        INDEX: "0x0",
+        DEP_TYPE: "code",
+    },
+    [Environments.Testnet]: {
+        CODE_HASH: "",
+        HASH_TYPE: "type",
+        TX_HASH: "",
+        INDEX: "",
         DEP_TYPE: "code",
     },
 };
@@ -225,9 +230,11 @@ export class ConnectionService {
                 isSecp256k1Blake160Address(address, this.config) ||
                 isAcpAddress(address, this.config) ||
                 isSecp256k1Blake160MultisigAddress(address, this.config) ||
+                isOmnilockAddress(address, this.config) ||
                 this.isOnepassAddress(address) ||
-                this.isOmnilockAddress(address) ||
-                this.isPwlockK1AcplAddress(address)
+                this.isPwlockK1AcplAddress(address) ||
+                this.isForceBridgeAddress(address) ||
+                this.isBitAddress(address)
             );
         } catch (err) {
             return false;
@@ -239,18 +246,14 @@ export class ConnectionService {
         return lock.codeHash === OnepassConfig[this.env].CODE_HASH && lock.hashType === OnepassConfig[this.env].HASH_TYPE;
     }
 
-    isNewOmnilockAddress(address: string): boolean {
+    isForceBridgeAddress(address: string): boolean {
         const lock = this.getLockFromAddress(address);
-        return lock.codeHash === NewOmnilockConfig[this.env].CODE_HASH && lock.hashType === NewOmnilockConfig[this.env].HASH_TYPE;
+        return lock.codeHash === ForceBridgeConfig[this.env].CODE_HASH && lock.hashType === ForceBridgeConfig[this.env].HASH_TYPE;
     }
 
-    isOldOmnilockAddress(address: string): boolean {
+    isBitAddress(address: string): boolean {
         const lock = this.getLockFromAddress(address);
-        return lock.codeHash === OldOmnilockConfig[this.env].CODE_HASH && lock.hashType === OldOmnilockConfig[this.env].HASH_TYPE;
-    }
-
-    isOmnilockAddress(address: string): boolean {
-        return this.isNewOmnilockAddress(address) || this.isOldOmnilockAddress(address);
+        return lock.codeHash === BitConfig[this.env].CODE_HASH && lock.hashType === BitConfig[this.env].HASH_TYPE;
     }
 
     isPwlockK1AcplAddress(address: string): boolean {
@@ -265,9 +268,11 @@ export class ConnectionService {
                 isSecp256k1Blake160Address(address, config) ||
                 isAcpAddress(address, config) ||
                 isSecp256k1Blake160MultisigAddress(address, config) ||
+                isOmnilockAddress(address, config) ||
                 ConnectionService.isOnepassAddress(network, address) ||
-                ConnectionService.isOmnilockAddress(network, address) ||
-                ConnectionService.isPwlockK1AcplAddress(network, address)
+                ConnectionService.isPwlockK1AcplAddress(network, address) ||
+                ConnectionService.isForceBridgeAddress(network, address) ||
+                ConnectionService.isBitAddress(network, address)
             );
         } catch (err) {
             return false;
@@ -303,18 +308,16 @@ export class ConnectionService {
         return lock.codeHash === OnepassConfig[network].CODE_HASH && lock.hashType === OnepassConfig[network].HASH_TYPE;
     }
 
-    static isNewOmnilockAddress(network: Environments, lock: Script): boolean {
-        return lock.codeHash === OldOmnilockConfig[network].CODE_HASH && lock.hashType === OldOmnilockConfig[network].HASH_TYPE;
-    }
-
-    static isOldOmnilockAddress(network: Environments, lock: Script): boolean {
-        return lock.codeHash === OldOmnilockConfig[network].CODE_HASH && lock.hashType === OldOmnilockConfig[network].HASH_TYPE;
-    }
-
-    static isOmnilockAddress(network: Environments, address: string): boolean {
+    static isForceBridgeAddress(network: Environments, address: string): boolean {
         const config = network === Environments.Mainnet ? LINA : AGGRON4;
         const lock = ConnectionService.getLockFromAddress(address, config);
-        return ConnectionService.isNewOmnilockAddress(network, lock) || ConnectionService.isOldOmnilockAddress(network, lock);
+        return lock.codeHash === ForceBridgeConfig[network].CODE_HASH && lock.hashType === ForceBridgeConfig[network].HASH_TYPE;
+    }
+
+    static isBitAddress(network: Environments, address: string): boolean {
+        const config = network === Environments.Mainnet ? LINA : AGGRON4;
+        const lock = ConnectionService.getLockFromAddress(address, config);
+        return lock.codeHash === BitConfig[network].CODE_HASH && lock.hashType === BitConfig[network].HASH_TYPE;
     }
 
     static isPwlockK1AcplAddress(network: Environments, address: string): boolean {
