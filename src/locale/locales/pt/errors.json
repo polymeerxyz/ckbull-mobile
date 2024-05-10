@@ -29,8 +29,9 @@
     "no_tokens": "Não há tokens ainda",
     "no_deposits": "Sem depósitos",
     "no_withdrawals": "Sem retiradas",
-    "sign_in_request_already_signed": "Sign In request already signed",
-    "transaction_request_already_signed": "Transaction request already signed",
-    "transaction_request_already_declined": "Transaction request already declined",
-    "invalid_transaction": "Invalid transaction"
+    "sign_in_request_already_signed": "Pedido de entrada já assinado",
+    "transaction_request_already_signed": "Pedido de transação já assinado",
+    "transaction_request_already_declined": "Pedido de transação já recusado",
+    "invalid_transaction": "Transação inválida",
+    "invalid_domain": "Dominio inválido"
 }

@@ -29,8 +29,9 @@
     "no_tokens": "Δεν υπάρχουν token",
     "no_deposits": "Δεν υπάρχουν καταθέσεις",
     "no_withdrawals": "Δεν υπάρχουν αναλήψεις",
-    "sign_in_request_already_signed": "Sign In request already signed",
-    "transaction_request_already_signed": "Transaction request already signed",
-    "transaction_request_already_declined": "Transaction request already declined",
-    "invalid_transaction": "Invalid transaction"
+    "sign_in_request_already_signed": "Το αίτημα σύνδεσης έχει ήδη υπογραφεί",
+    "transaction_request_already_signed": "Το αίτημα συναλλαγής έχει ήδη υπογραφεί",
+    "transaction_request_already_declined": "Το αίτημα συναλλαγής έχει ήδη απορριφθεί",
+    "invalid_transaction": "Μη έγκυρη συναλλαγή",
+    "invalid_domain": "Μη έγκυρο domain"
 }

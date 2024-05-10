@@ -11,6 +11,7 @@ enum Queries {
     SIGNER_APP_GET_SIGNED_TRANSACTIONS = "signer_app_get_signed_transactions",
     SIGNER_APP_GET_TRANSACTION_TYPE = "signer_app_get_transaction_type",
     SIGNER_APP_GET_NFT_FROM_TRANSACTION = "signer_app_get_nft_from_transaction",
+    GET_ADDRESS_FROM_DOMAIN = "get_address_from_domain",
 }
 
 export default Queries;

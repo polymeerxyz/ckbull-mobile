@@ -43,11 +43,13 @@
         "@react-navigation/native": "^6.1.12",
         "@react-navigation/native-stack": "^6.9.20",
         "@spore-sdk/core": "^0.1.0",
+        "bech32": "2.0.0",
         "big-integer": "^1.6.52",
         "buffer": "^6.0.3",
         "core-js": "^3.36.0",
         "cross-fetch": "^4.0.0",
         "crypto-browserify": "^3.12.0",
+        "dotbit": "^0.4.29",
         "expo": "^49.0.0",
         "expo-asset": "~8.10.1",
         "expo-barcode-scanner": "~12.5.3",
@@ -129,6 +131,7 @@
         "react-native-pager-view": "6.2.2",
         "react-native-svg": "13.9.0",
         "react-native-gesture-handler": "2.12.0",
-        "react-native-reanimated": "~3.3.0"
+        "react-native-reanimated": "~3.3.0",
+        "bech32": "2.0.0"
     }
 }

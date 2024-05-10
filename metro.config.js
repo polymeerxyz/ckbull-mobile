@@ -10,6 +10,10 @@ config.resolver = {
         fs: path.resolve(__dirname, "src/polyfills/FileSystem"),
         path: path.resolve(__dirname, "src/polyfills/Path"),
         stream: require.resolve("readable-stream"),
+        http: path.resolve(__dirname, "src/polyfills/Http"),
+        https: path.resolve(__dirname, "src/polyfills/Https"),
+        zlib: path.resolve(__dirname, "src/polyfills/Zlib"),
+        util: path.resolve(__dirname, "src/polyfills/Util"),
     },
 };
 
