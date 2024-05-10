@@ -19,25 +19,18 @@ export const NftSelectItem = ({ nft }: NftSelectItemProps) => {
         });
     };
 
-    if (nft.type !== NftTypes.Spore) {
-        const { nftName, tokenUri } = nft;
-
-        return (
-            <SelectItemCard onPress={handleOnPress}>
-                <NftSelectItemImage uri={tokenUri} />
-                <Typography variant="body2Regular" numberOfLines={1}>
-                    {nftName}
-                </Typography>
-            </SelectItemCard>
-        );
+    const name = nft.type !== NftTypes.Spore ? nft.nftName : nft.tokenId;
+    let tokenUri = nft.type !== NftTypes.Spore ? nft.tokenUri : undefined;
+    if (nft.type === NftTypes.Spore && nft.contentType.type === "image") {
+        const imageB64 = Buffer.from(nft.contentEncoded.toString().slice(2), "hex").toString("base64");
+        tokenUri = `data:${nft.contentType.mediaType};base64,${imageB64}`;
     }
 
-    // TODO: Case NFT is Spore. Should look at nft.contentType.mediaType and render nft.content
     return (
         <SelectItemCard onPress={handleOnPress}>
-            <NftSelectItemImage />
+            <NftSelectItemImage uri={tokenUri} />
             <Typography variant="body2Regular" numberOfLines={1}>
-                {nft.tokenId}
+                {name}
             </Typography>
         </SelectItemCard>
     );

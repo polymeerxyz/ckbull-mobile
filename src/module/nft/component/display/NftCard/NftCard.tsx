@@ -7,18 +7,15 @@ import { NftTypes } from "ckb-peersyst-sdk";
 
 const NftCard = ({ nft }: NftCardProps): JSX.Element => {
     const nftName = nft.type === NftTypes.Spore ? nft.tokenId : nft.nftName;
-    const tokenUri = nft.type !== NftTypes.Spore ? nft.tokenUri : null;
+    let tokenUri = nft.type !== NftTypes.Spore ? nft.tokenUri : undefined;
     const tokenId = nft.type !== NftTypes.Spore ? nft.tokenId : null;
     const total = nft.type === NftTypes.MNft ? nft.total : null;
     let description = nft.type !== NftTypes.Spore ? nft.data.description : null;
-    const image = new Image();
 
     // Image if spore
     if (nft.type === NftTypes.Spore && nft.contentType.type === "image") {
-        const mimeType = nft.contentType.mediaType;
-        const content = nft.content;
-        image.setAttribute("contentType", mimeType);
-        image.setAttribute("content", content);
+        const imageB64 = Buffer.from(nft.contentEncoded.toString().slice(2), "hex").toString("base64");
+        tokenUri = `data:${nft.contentType.mediaType};base64,${imageB64}`;
     }
     if (nft.type === NftTypes.Spore && nft.contentType.type === "text") {
         // text/plain text/csv
@@ -30,7 +27,7 @@ const NftCard = ({ nft }: NftCardProps): JSX.Element => {
     return (
         <TouchableWithoutFeedback>
             <MainListCard gap={24} style={{ height: 128, paddingVertical: 20 }}>
-                <NftCardImage source={tokenUri ? { uri: tokenUri } : image} />
+                <NftCardImage source={{ uri: tokenUri }} />
                 <Col gap={10} flex={1} justifyContent={"space-between"}>
                     <Col>
                         {nftName && (
