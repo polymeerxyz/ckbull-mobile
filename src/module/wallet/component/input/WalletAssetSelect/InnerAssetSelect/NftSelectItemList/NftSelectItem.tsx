@@ -1,5 +1,5 @@
 import { AssetType } from "module/wallet/wallet.types";
-import { Nft } from "ckb-peersyst-sdk";
+import { Nft, NftTypes } from "ckb-peersyst-sdk";
 import SelectItemCard from "../SelectItemCard";
 import { useAssetSelect } from "../../hook/useAssetSelect";
 import { Typography } from "@peersyst/react-native-components";
@@ -10,7 +10,6 @@ export interface NftSelectItemProps {
 }
 
 export const NftSelectItem = ({ nft }: NftSelectItemProps) => {
-    const { nftName, tokenUri } = nft;
     const { setSelectedAsset } = useAssetSelect();
 
     const handleOnPress = () => {
@@ -20,11 +19,25 @@ export const NftSelectItem = ({ nft }: NftSelectItemProps) => {
         });
     };
 
+    if (nft.type !== NftTypes.Spore) {
+        const { nftName, tokenUri } = nft;
+
+        return (
+            <SelectItemCard onPress={handleOnPress}>
+                <NftSelectItemImage uri={tokenUri} />
+                <Typography variant="body2Regular" numberOfLines={1}>
+                    {nftName}
+                </Typography>
+            </SelectItemCard>
+        );
+    }
+
+    // TODO: Case NFT is Spore. Should look at nft.contentType.mediaType and render nft.content
     return (
         <SelectItemCard onPress={handleOnPress}>
-            <NftSelectItemImage uri={tokenUri} />
+            <NftSelectItemImage />
             <Typography variant="body2Regular" numberOfLines={1}>
-                {nftName}
+                {nft.tokenId}
             </Typography>
         </SelectItemCard>
     );

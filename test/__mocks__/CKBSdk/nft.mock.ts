@@ -1,5 +1,6 @@
 import BaseMock from "mocks/common/base.mock";
-import { Nft, NftScript } from "ckb-peersyst-sdk";
+import { NftTypes, Nrc721Nft } from "ckb-peersyst-sdk";
+import { Script } from "@ckb-lumos/lumos";
 
 export interface NftTokenMetadata {
     description: string;
@@ -13,18 +14,24 @@ export class NftTokenMetadataMock extends BaseMock {
     }
 }
 
-export class NftTokenMock extends BaseMock implements Nft {
+export class NftTokenMock extends BaseMock implements Nrc721Nft {
+    type: NftTypes.Nrc721;
     tokenId: string;
     data: any;
     nftName: string;
     tokenUri: string;
     rawData: string;
-    script: NftScript;
-    constructor({ tokenId, data, nftName, tokenUri, rawData, script }: Partial<Nft> = {}) {
+    nftSymbol: string;
+    script: Script;
+    nftExtraData: string;
+    constructor({ tokenId, data, nftName, tokenUri, rawData, script, nftSymbol, nftExtraData }: Partial<Nrc721Nft> = {}) {
         super();
+        this.type = NftTypes.Nrc721;
         this.tokenId = tokenId || "tokenId";
         this.data = data || new NftTokenMetadataMock();
         this.nftName = nftName || "nftName";
+        this.nftSymbol = nftSymbol || "nftSymbol";
+        this.nftExtraData = nftExtraData || "nftExtraData";
         this.tokenUri = tokenUri || "tokenUri";
         this.rawData = rawData || "rawData";
         this.script = script || { args: "args", codeHash: "codeHash", hashType: "data" };

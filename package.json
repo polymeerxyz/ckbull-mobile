@@ -42,6 +42,7 @@
         "@react-navigation/bottom-tabs": "^6.5.14",
         "@react-navigation/native": "^6.1.12",
         "@react-navigation/native-stack": "^6.9.20",
+        "@spore-sdk/core": "^0.1.0",
         "big-integer": "^1.6.52",
         "buffer": "^6.0.3",
         "core-js": "^3.36.0",
