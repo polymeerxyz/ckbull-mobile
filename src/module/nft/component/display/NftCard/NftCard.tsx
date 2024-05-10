@@ -3,22 +3,34 @@ import MainListCard from "module/main/component/display/MainListCard/MainListCar
 import { TouchableWithoutFeedback } from "react-native";
 import { NftCardImage } from "./NftCard.styles";
 import { NftCardProps } from "./NftCard.types";
+import { NftTypes } from "ckb-peersyst-sdk";
 
 const NftCard = ({ nft }: NftCardProps): JSX.Element => {
-    const {
-        nftName,
-        tokenUri,
-        total,
-        tokenId,
-        data: { description },
-    } = nft;
+    const nftName = nft.type === NftTypes.Spore ? nft.tokenId : nft.nftName;
+    const tokenUri = nft.type !== NftTypes.Spore ? nft.tokenUri : null;
+    const tokenId = nft.type !== NftTypes.Spore ? nft.tokenId : null;
+    const total = nft.type === NftTypes.MNft ? nft.total : null;
+    let description = nft.type !== NftTypes.Spore ? nft.data.description : null;
+    const image = new Image();
+
+    // Image if spore
+    if (nft.type === NftTypes.Spore && nft.contentType.type === "image") {
+        const mimeType = nft.contentType.mediaType;
+        const content = nft.content;
+        image.setAttribute("contentType", mimeType);
+        image.setAttribute("content", content);
+    }
+    if (nft.type === NftTypes.Spore && nft.contentType.type === "text") {
+        // text/plain text/csv
+        description = nft.content;
+    }
 
     const showTotal = tokenId && typeof total === "number";
 
     return (
         <TouchableWithoutFeedback>
             <MainListCard gap={24} style={{ height: 128, paddingVertical: 20 }}>
-                <NftCardImage source={{ uri: tokenUri }} />
+                <NftCardImage source={tokenUri ? { uri: tokenUri } : image} />
                 <Col gap={10} flex={1} justifyContent={"space-between"}>
                     <Col>
                         {nftName && (
