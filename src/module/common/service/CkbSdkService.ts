@@ -19,6 +19,8 @@ import {
     FullTransaction,
     GetNftFromPartialTransactionParams,
     GetTransactionTypeParams,
+    MeltNftParams,
+    MintNftParams,
     SendTransactionParams,
     SignPartialTransactionParams,
     TransferNftParams,
@@ -139,7 +141,22 @@ export class CKBSDKService {
     }
 
     async sendNft(params: TransferNftParams): Promise<string> {
-        return this.wallet.transferNfts(params.mnemonic.join(" "), params.to, params.nft, params.feeRate);
+        return this.wallet.transferNft(params.mnemonic.join(" "), params.to, params.nft, params.feeRate);
+    }
+
+    async mintNft(params: MintNftParams): Promise<string> {
+        return this.wallet.mintSporeNft(
+            params.mnemonic.join(" "),
+            params.to,
+            params.mimeType,
+            params.content,
+            params.immortal,
+            params.feeRate,
+        );
+    }
+
+    async meltNft(params: MeltNftParams): Promise<string> {
+        return this.wallet.meltSporeNft(params.mnemonic.join(" "), params.to, params.nft, params.feeRate);
     }
 
     async depositInDAO(params: DepositInDAOParams): Promise<string> {

@@ -1,6 +1,6 @@
 {
     "projectName": "ckbull",
-    "minimumTransactionAmount": 61,
+    "minimumTransactionAmount": 85,
     "minimumDaoDeposit": 102,
     "mainnetExplorerLink": "https://explorer.nervos.org/",
     "testnetExplorerLink": "https://pudge.explorer.nervos.org/",

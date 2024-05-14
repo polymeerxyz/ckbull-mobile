@@ -6,3 +6,4 @@ global.Buffer = require("buffer").Buffer;
  * @see https://github.com/auth0/jwt-decode#polyfilling-atob
  */
 import "core-js/stable/atob";
+import "text-encoding-polyfill";

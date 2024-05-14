@@ -447,12 +447,35 @@ export class WalletService {
         return this.nftService.getBalanceFromCells(this.getCells());
     }
 
-    async transferNfts(mnemo: string, to: string, nft: Nft, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
+    async transferNft(mnemo: string, to: string, nft: Nft, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
         await this.synchronize();
         const addresses = this.getAllAddresses();
         const privateKeys = this.getAllPrivateKeys(mnemo);
 
         return this.nftService.transferFromCells(this.getCells(), addresses, to, nft, privateKeys, feeRate);
+    }
+
+    async mintSporeNft(
+        mnemo: string,
+        to: string,
+        mimeType: string,
+        content: string,
+        immortal = false,
+        feeRate: FeeRate = FeeRate.NORMAL,
+    ): Promise<string> {
+        await this.synchronize();
+        const addresses = this.getAllAddresses();
+        const privateKeys = this.getAllPrivateKeys(mnemo);
+
+        return this.nftService.mintSporeFromCells(this.getCells(), addresses, to, mimeType, content, immortal, privateKeys, feeRate);
+    }
+
+    async meltSporeNft(mnemo: string, to: string, nft: Nft, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
+        await this.synchronize();
+        const addresses = this.getAllAddresses();
+        const privateKeys = this.getAllPrivateKeys(mnemo);
+
+        return this.nftService.meltSporeNftFromCells(this.getCells(), addresses, to, nft, privateKeys, feeRate);
     }
 
     // ---------------------------

@@ -1879,7 +1879,7 @@
     cross-fetch "^3.1.5"
     events "^3.3.0"
 
-"@ckb-lumos/lumos@^0.22.0":
+"@ckb-lumos/lumos@^0.22.0-next.4":
   version "0.22.2"
   resolved "https://registry.yarnpkg.com/@ckb-lumos/lumos/-/lumos-0.22.2.tgz#f6babead9a1a7c669830411afe60666c9fc913af"
   integrity sha512-oobNnRx2m2crr6rgz4Mz066ggRLiAgZPwcZJCxiQLxIR3e9ik9f37hxJOEhZ/1kZmNMxZIKectVckaMn8MHROg==
@@ -2325,6 +2325,11 @@
     "@ethersproject/logger" "^5.7.0"
     "@ethersproject/properties" "^5.7.0"
     "@ethersproject/strings" "^5.7.0"
+
+"@exact-realty/multipart-parser@^1.0.13":
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/@exact-realty/multipart-parser/-/multipart-parser-1.0.13.tgz#024ba7df1fcb8400ecd3a004156e0a9f3ab7ba8b"
+  integrity sha512-BGnB0VVn18dkz85rvBmp/CyxAMvUcVrsNf3qw8Fdx80V6+MsQUTxRdQnC0PzLIxbN8PKGFs8afd+ur8V1JLv8g==
 
 "@expo/apple-utils@1.0.0":
   version "1.0.0"
@@ -3871,6 +3876,11 @@
   integrity sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==
   dependencies:
     "@sinonjs/commons" "^3.0.0"
+
+"@spore-sdk/core@^0.2.0-beta.2":
+  version "0.2.0-beta.8"
+  resolved "https://registry.yarnpkg.com/@spore-sdk/core/-/core-0.2.0-beta.8.tgz#eb528372c6c571f93261c6adda6a6b03e262d963"
+  integrity sha512-2u0e544JDQMVnJOcO3QK9G7yNrbj6nju8PH78k7+/cf9EbOltDudZCpU3YpgffsdMOKhfmpY8xCAq4w/+Jjm1Q==
 
 "@swisstype/essential@^0.0.5":
   version "0.0.5"
@@ -14429,6 +14439,16 @@ test-exclude@^6.0.0:
     "@istanbuljs/schema" "^0.1.2"
     glob "^7.1.4"
     minimatch "^3.0.4"
+
+text-encoding-polyfill@^0.6.7:
+  version "0.6.7"
+  resolved "https://registry.yarnpkg.com/text-encoding-polyfill/-/text-encoding-polyfill-0.6.7.tgz#4d27de0153e4c86eb2631ffd74c2f3f57969a9ec"
+  integrity sha512-/DZ1XJqhbqRkCop6s9ZFu8JrFRwmVuHg4quIRm+ziFkR3N3ec6ck6yBvJ1GYeEQZhLVwRW0rZE+C3SSJpy0RTg==
+
+text-encoding@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/text-encoding/-/text-encoding-0.7.0.tgz#f895e836e45990624086601798ea98e8f36ee643"
+  integrity sha512-oJQ3f1hrOnbRLOcwKz0Liq2IcrvDeZRHXhd9RgLrsT+DjWY/nty1Hi7v3dtkaEYbPYe0mUoOfzRrMwfXXwgPUA==
 
 text-table@^0.2.0:
   version "0.2.0"

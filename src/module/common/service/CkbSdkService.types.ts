@@ -33,6 +33,23 @@ export interface TransferNftParams {
     feeRate?: FeeRate;
 }
 
+export interface MintNftParams {
+    mnemonic: string[];
+    to: string;
+    nft: Nft;
+    mimeType: string;
+    content: string;
+    immortal?: boolean;
+    feeRate?: FeeRate;
+}
+
+export interface MeltNftParams {
+    mnemonic: string[];
+    to: string;
+    nft: Nft;
+    feeRate?: FeeRate;
+}
+
 export interface WithdrawOrUnlockParams {
     unlockableAmount: DAOUnlockableAmount;
     mnemonic: string[];
