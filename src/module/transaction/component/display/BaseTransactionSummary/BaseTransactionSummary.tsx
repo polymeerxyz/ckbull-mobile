@@ -9,7 +9,7 @@ import Fee from "../Fee/Fee";
 import { BalanceOperations } from "module/common/utils/BalanceOperations/BalanceOperations";
 import { convertShannonsToCKB } from "module/wallet/utils/convertShannonsToCKB";
 import { TokenAmount } from "module/token/types";
-import { Nft } from "ckb-peersyst-sdk";
+import { Nft, NftTypes } from "ckb-peersyst-sdk";
 import { useSettings } from "module/settings/hook/useSettings";
 
 export interface BaseTransactionSummaryFullProps {
@@ -33,7 +33,7 @@ const BaseTransactionSummary = ({ amount, token, children, showTotal, nft }: Bas
                 <Col gap="2%" alignItems="center">
                     {nft ? (
                         <Typography variant="title3Regular" textAlign="center" numberOfLines={1}>
-                            {nft.nftName}
+                            {nft.type !== NftTypes.Spore ? nft.nftName : nft.tokenId}
                         </Typography>
                     ) : (
                         <Balance

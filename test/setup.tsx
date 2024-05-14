@@ -4,6 +4,11 @@ import "@testing-library/jest-native";
 
 import "@testing-library/jest-native/extend-expect";
 
+import { TextEncoder, TextDecoder } from "util";
+
+(global as any).TextEncoder = TextEncoder;
+(global as any).TextDecoder = TextDecoder;
+
 jest.mock("react-native/Libraries/Animated/NativeAnimatedHelper");
 
 // Mock AsyncStorage
