@@ -14,6 +14,13 @@ import {
     setAbsoluteCapacityMargin,
     calculateFeeByTransactionSkeleton,
 } from "@spore-sdk/core";
+import {
+    generateTransferSporeAction,
+    generateMeltSporeAction,
+    injectCommonCobuildProof,
+    generateCreateSporeAction,
+} from "@spore-sdk/core/lib/cobuild";
+
 import { Logger } from "../../utils/logger";
 import { ConnectionService, Environments } from "../connection.service";
 import { FeeRate, ScriptType, TransactionService } from "../transaction.service";
@@ -89,6 +96,7 @@ export interface NftConfigType {
     codeHash?: string;
     classCodeHash?: string;
     version?: string;
+    cobuild?: boolean;
 }
 
 const nftConfig: { [key in Environments]: { [key in NftTypes]: NftConfigType[] } } = {
@@ -119,6 +127,7 @@ const nftConfig: { [key in Environments]: { [key in NftTypes]: NftConfigType[] }
                 hashType: "data1",
                 codeHash: "0x4a4dce1df3dffff7f8b2cd7dff7303df3b6150c9788cb75dcf6747247132b9f5",
                 version: "0.2.2",
+                cobuild: true,
             },
         ],
     },
@@ -157,6 +166,7 @@ const nftConfig: { [key in Environments]: { [key in NftTypes]: NftConfigType[] }
                 hashType: "data1",
                 codeHash: "0x685a60219309029d01310311dba953d67029170ca4848a4ff638e57002130a0d",
                 version: "0.2.2",
+                cobuild: true,
             },
             {
                 txHash: "0x06995b9fc19461a2bf9933e57b69af47a20bf0a5bc6c0ffcb85567a2c733f0a1",
@@ -216,7 +226,7 @@ export class NftService {
     }
 
     private getNrc721ConfigFromScript(script: Script): NftConfigType | null {
-        const nrc721Cfgs = nftConfig[this.connection.getEnvironment()][NftTypes.Nrc721];
+        const nrc721Cfgs = this.getNrc721Config();
 
         for (const cfg of nrc721Cfgs) {
             if (script.codeHash === cfg.codeHash && script.hashType === cfg.hashType) {
@@ -232,7 +242,7 @@ export class NftService {
     }
 
     private getMNftConfigFromScript(script: Script): NftConfigType | null {
-        const mNftCfgs = nftConfig[this.connection.getEnvironment()][NftTypes.MNft];
+        const mNftCfgs = this.getMNftConfig();
 
         for (const cfg of mNftCfgs) {
             if (script.codeHash === cfg.codeHash && script.hashType === cfg.hashType) {
@@ -483,6 +493,18 @@ export class NftService {
         });
 
         txSkeleton = this.transactionService.injectNftCapacity(txSkeleton, nft.script, nft.rawData, cells);
+        if (nft.type == NftTypes.Spore && cfg.cobuild) {
+            const actionResult = generateTransferSporeAction({
+                txSkeleton,
+                inputIndex: 0,
+                outputIndex: 0,
+            });
+            const injectCobuildProofResult = injectCommonCobuildProof({
+                txSkeleton,
+                actions: actionResult.actions,
+            });
+            txSkeleton = injectCobuildProofResult.txSkeleton;
+        }
 
         // Pay fee
         const minCapacity = minimalCellCapacityCompatible(outputCell);
@@ -575,6 +597,23 @@ export class NftService {
             });
         });
 
+        // Inject extra witnesses
+        if (cfg.cobuild) {
+            const actionResult = generateCreateSporeAction({
+                txSkeleton,
+                reference: {
+                    referenceTarget: "none",
+                    referenceType: void 0,
+                },
+                outputIndex: 0,
+            });
+            const injectCobuildProofResult = injectCommonCobuildProof({
+                txSkeleton,
+                actions: actionResult.actions,
+            });
+            txSkeleton = injectCobuildProofResult.txSkeleton;
+        }
+
         // Pay fee
         txSkeleton = await common.payFeeByFeeRate(txSkeleton, fromAddresses, feeRate, undefined, this.connection.getConfigAsObject());
 
@@ -636,6 +675,17 @@ export class NftService {
         // Add witnesses
         txSkeleton = txSkeleton.update("witnesses", (witnesses) => witnesses.push("0x"));
         txSkeleton = this.transactionService.addWitnesses(txSkeleton, cell.cellOutput.lock);
+        if (cfg.cobuild) {
+            const actionResult = generateMeltSporeAction({
+                txSkeleton: txSkeleton,
+                inputIndex: 0,
+            });
+            const injectCobuildProofResult = injectCommonCobuildProof({
+                txSkeleton: txSkeleton,
+                actions: actionResult.actions,
+            });
+            txSkeleton = injectCobuildProofResult.txSkeleton;
+        }
 
         // Pay fee
         const minCapacity = minimalCellCapacityCompatible(outputCell);
