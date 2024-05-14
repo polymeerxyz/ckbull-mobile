@@ -175,6 +175,7 @@ const nftConfig: { [key in Environments]: { [key in NftTypes]: NftConfigType[] }
                 hashType: "data1",
                 codeHash: "0x5e063b4c0e7abeaa6a428df3b693521a3050934cf3b0ae97a800d1bc31449398",
                 version: "0.2.1",
+                cobuild: true,
             },
         ],
     },
