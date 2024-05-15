@@ -163,13 +163,24 @@ export const tokensList: TokenType[] = [
         hashType: "data1",
         kind: "xudt",
     },
+    {
+        name: "MEMES",
+        description: "The First inscription on Omiga",
+        tokenName: "MEMES",
+        decimals: 8,
+        imageUri: "",
+        args: "0x0b95149deefb86a729b0b2794df23f8e6e03f1bce70651dbdeac3da8ebc32584",
+        codeHash: "0x50bd8d6680b8b9cf98b73f3c08faf8b2a21914311954118ad6609be6e78a1b95",
+        hashType: "data1",
+        kind: "xudt",
+    },
 ];
 
 export const UknownToken: TokenType = {
     name: "Unknown Token",
     tokenName: "Unknown Token",
     description: "Unknown Token",
-    decimals: 0,
+    decimals: 8,
     imageUri: "",
     args: "",
     codeHash: "0x5e7a36a77e68eecc013dfa2fe6a23f3b6c344b04005808694ae6dd45eea4cfd5",
