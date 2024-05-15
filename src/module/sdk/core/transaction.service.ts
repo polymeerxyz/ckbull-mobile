@@ -171,7 +171,7 @@ export class TransactionService {
                     };
                     const data = inputTx.transaction.outputsData[outputIdx];
                     if (data && data !== "0x") {
-                        if (data.length > 34) {
+                        if (data.length >= 34) {
                             inputData = Number(number.Uint128LE.unpack(data.substring(0, 34)).toBigInt());
                         } else if (data.length === 18) {
                             inputData = Number(number.Uint64LE.unpack(data).toBigInt());
@@ -215,8 +215,8 @@ export class TransactionService {
         });
         lumosTx.transaction.outputsData.map((data, index) => {
             if (data !== "0x") {
-                if (data.length === 34) {
-                    outputs[index].data = Number(number.Uint128LE.unpack(data).toBigInt());
+                if (data.length >= 34) {
+                    outputs[index].data = Number(number.Uint128LE.unpack(data.substring(0, 34)).toBigInt());
                 } else if (data.length === 18) {
                     outputs[index].data = Number(number.Uint64LE.unpack(data).toBigInt());
                 }
@@ -396,7 +396,7 @@ export class TransactionService {
                 lock: tokenCells[0].cellOutput.lock,
                 type: tokenType,
             },
-            data: number.Uint128LE.unpack(BigInt(0).toString()).toBigInt().toString() + xudtData,
+            data: bytes.hexify(number.Uint128LE.pack("0")) + xudtData,
             outPoint: undefined,
             blockHash: undefined,
         };
