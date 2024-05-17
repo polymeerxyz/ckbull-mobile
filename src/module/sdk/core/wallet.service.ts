@@ -396,13 +396,14 @@ export class WalletService {
     // -----------------------------
     // -- Token service functions --
     // -----------------------------
-    // Deprecated in accounts
+    // Deprecated in accounts, only sudt
     async issueTokens(amount: number, mnemo: string, accountId = 0, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
         const { address, privateKey } = this.getAddressAndPrivateKey(mnemo, accountId);
 
         return this.tokenService.issue(address, amount, privateKey, feeRate);
     }
 
+    // Deprecated in accounts, only sudt
     async transferTokensSingleAccount(
         amount: number,
         mnemo: string,

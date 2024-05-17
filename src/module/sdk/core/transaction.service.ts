@@ -9,6 +9,7 @@ import { Logger } from "../utils/logger";
 import { NftService } from "./assets/nft.service";
 import { number, bytes } from "@ckb-lumos/codec";
 import { blockchain } from "@ckb-lumos/base";
+import { XudtConfig } from "./assets/token.service";
 
 const { ScriptValue } = values;
 
@@ -83,18 +84,27 @@ export class TransactionService {
     }
 
     static addCellDep(txSkeleton: TransactionSkeletonType, scriptConfig: ScriptConfig): TransactionSkeletonType {
+        const { TX_HASH, INDEX, DEP_TYPE } = scriptConfig;
+
+        if (txSkeleton.has("cellDeps")) {
+            const cellDeps = txSkeleton.get("cellDeps");
+            if (cellDeps.filter((cell) => cell.outPoint.txHash === TX_HASH && cell.outPoint.index === INDEX).size > 0) {
+                return txSkeleton;
+            }
+        }
+
         return txSkeleton.update("cellDeps", (cellDeps) => {
             return cellDeps.push({
                 outPoint: {
-                    txHash: scriptConfig.TX_HASH,
-                    index: scriptConfig.INDEX,
+                    txHash: TX_HASH,
+                    index: INDEX,
                 },
-                depType: scriptConfig.DEP_TYPE,
+                depType: DEP_TYPE,
             });
         });
     }
 
-    static isScriptTypeScript(scriptType: ScriptType, scriptConfig: ScriptConfig): boolean {
+    static isScriptTypeScript(scriptType: Script, scriptConfig: ScriptConfig): boolean {
         return scriptConfig.CODE_HASH === scriptType.codeHash && scriptConfig.HASH_TYPE === scriptType.hashType;
     }
 
@@ -103,10 +113,17 @@ export class TransactionService {
         return !!type && type.args === scriptType.args && type.codeHash === scriptType.codeHash && type.hashType === scriptType.hashType;
     }
 
-    private cellIsTokenType(cell: Cell, tokenHash: string): boolean {
+    private isScriptTokenScript(scriptType: ScriptType): boolean {
         const sudt = this.connection.getConfig().SCRIPTS.SUDT!;
+        const xudt = XudtConfig[this.connection.getEnvironment()];
+
+        return TransactionService.isScriptTypeScript(scriptType, sudt) || TransactionService.isScriptTypeScript(scriptType, xudt);
+    }
+
+    private cellIsTokenType(cell: Cell, tokenHash: string): boolean {
         const { type } = cell.cellOutput;
-        return !!type && type.codeHash === sudt.CODE_HASH && type.hashType === sudt.HASH_TYPE && type.args === tokenHash;
+
+        return !!type && type.args === tokenHash && this.isScriptTokenScript(type);
     }
 
     private getTransactionCollector(address: string, includeStatus = false, toBlock?: string, fromBlock?: string): any {
@@ -154,8 +171,8 @@ export class TransactionService {
                     };
                     const data = inputTx.transaction.outputsData[outputIdx];
                     if (data && data !== "0x") {
-                        if (data.length === 34) {
-                            inputData = Number(number.Uint128LE.unpack(data).toBigInt());
+                        if (data.length >= 34) {
+                            inputData = Number(number.Uint128LE.unpack(data.substring(0, 34)).toBigInt());
                         } else if (data.length === 18) {
                             inputData = Number(number.Uint64LE.unpack(data).toBigInt());
                         }
@@ -180,7 +197,7 @@ export class TransactionService {
                 }
             } else if (output.type) {
                 const outputScriptType = { args: output.type.args, codeHash: output.type.codeHash, hashType: output.type.hashType };
-                if (TransactionService.isScriptTypeScript(outputScriptType, this.connection.getConfig().SCRIPTS.SUDT!)) {
+                if (this.isScriptTokenScript(outputScriptType)) {
                     tokensDestinationsIndex.push(index);
                 }
             }
@@ -198,8 +215,8 @@ export class TransactionService {
         });
         lumosTx.transaction.outputsData.map((data, index) => {
             if (data !== "0x") {
-                if (data.length === 34) {
-                    outputs[index].data = Number(number.Uint128LE.unpack(data).toBigInt());
+                if (data.length >= 34) {
+                    outputs[index].data = Number(number.Uint128LE.unpack(data.substring(0, 34)).toBigInt());
                 } else if (data.length === 18) {
                     outputs[index].data = Number(number.Uint64LE.unpack(data).toBigInt());
                 }
@@ -225,7 +242,7 @@ export class TransactionService {
         } else if (outputIndex !== null) {
             const { type: outputType, data, quantity } = outputs[outputIndex];
             scriptType = outputType!;
-            if (TransactionService.isScriptTypeScript(scriptType, this.connection.getConfig().SCRIPTS.SUDT!)) {
+            if (this.isScriptTokenScript(scriptType)) {
                 type = !isReceive ? TransactionType.SEND_TOKEN : TransactionType.RECEIVE_TOKEN;
                 if (type === TransactionType.RECEIVE_TOKEN) {
                     tokenAmount = data || 0;
@@ -247,7 +264,7 @@ export class TransactionService {
             }
         } else {
             scriptType = inputType!;
-            if (TransactionService.isScriptTypeScript(scriptType, this.connection.getConfig().SCRIPTS.SUDT!)) {
+            if (this.isScriptTokenScript(scriptType)) {
                 type = !isReceive ? TransactionType.SEND_TOKEN : TransactionType.RECEIVE_TOKEN;
                 if (inputData) {
                     tokenAmount = inputData;
@@ -287,7 +304,12 @@ export class TransactionService {
         return TransactionService.addCellDep(txSkeleton, this.connection.getConfig().SCRIPTS.SUDT!);
     }
 
+    addXudtCellDep(txSkeleton: TransactionSkeletonType): TransactionSkeletonType {
+        return TransactionService.addCellDep(txSkeleton, XudtConfig[this.connection.getEnvironment()]);
+    }
+
     injectCapacity(txSkeleton: TransactionSkeletonType, capacity: bigint, cells: Cell[]): TransactionSkeletonType {
+        txSkeleton = this.addSecp256CellDep(txSkeleton);
         let lastScript: Script | undefined;
         let changeCell: Cell | undefined;
         let changeCapacity = BigInt(0);
@@ -348,30 +370,56 @@ export class TransactionService {
         amount: bigint,
         capacity: bigint,
         cells: Cell[],
+        toScript?: Script,
     ): TransactionSkeletonType {
         const sudt = this.connection.getConfig().SCRIPTS.SUDT!;
-        const tokenType = {
-            codeHash: sudt.CODE_HASH,
-            hashType: sudt.HASH_TYPE,
-            args: token,
-        };
+        const xudt = XudtConfig[this.connection.getEnvironment()];
         const tokenCells = cells.filter((cell) => this.cellIsTokenType(cell, token));
         const noTypeCells = cells.filter((cell) => !cell.cellOutput.type);
         if (tokenCells.length === 0) {
             throw new Error("Insufficient tokens amount");
         }
 
+        const isSudt = tokenCells[0].cellOutput.type!.codeHash === sudt.CODE_HASH;
+        const xudtData = isSudt ? "" : tokenCells[0].data.substring(34);
+        txSkeleton = this.addSecp256CellDep(txSkeleton);
+        txSkeleton = isSudt ? this.addSudtCellDep(txSkeleton) : this.addXudtCellDep(txSkeleton);
+
+        const tokenType = {
+            codeHash: isSudt ? sudt.CODE_HASH : xudt.CODE_HASH,
+            hashType: isSudt ? sudt.HASH_TYPE : xudt.HASH_TYPE,
+            args: token,
+        };
         const changeCell: Cell = {
             cellOutput: {
                 capacity: "0x0",
                 lock: tokenCells[0].cellOutput.lock,
                 type: tokenType,
             },
-            data: number.Uint128LE.unpack(BigInt(0).toString()).toBigInt().toString(),
+            data: bytes.hexify(number.Uint128LE.pack("0")) + xudtData,
             outPoint: undefined,
             blockHash: undefined,
         };
-        const changeCellWithoutSudt: Cell = {
+        if (toScript) {
+            txSkeleton = txSkeleton.update("outputs", (outputs) => {
+                return outputs.push({
+                    cellOutput: {
+                        capacity: "0x" + capacity.toString(16),
+                        lock: toScript,
+                        type: tokenType,
+                    },
+                    data: bytes.hexify(number.Uint128LE.pack(amount.toString())) + xudtData,
+                });
+            });
+
+            txSkeleton = txSkeleton.update("fixedEntries", (fixedEntries) => {
+                return fixedEntries.push({
+                    field: "outputs",
+                    index: txSkeleton.get("outputs").size - 1,
+                });
+            });
+        }
+        const changeCellWithoutUdt: Cell = {
             cellOutput: {
                 capacity: "0x0",
                 lock: tokenCells[0].cellOutput.lock,
@@ -400,7 +448,7 @@ export class TransactionService {
             changeCapacity += inputCapacity - deductCapacity;
 
             if (cell.cellOutput.type) {
-                const inputAmount = number.Uint128LE.unpack(cell.data).toBigInt();
+                const inputAmount = number.Uint128LE.unpack(cell.data.substring(0, 34)).toBigInt();
                 let deductAmount = inputAmount;
                 if (deductAmount > currentAmount) {
                     deductAmount = currentAmount;
@@ -426,7 +474,7 @@ export class TransactionService {
                 currentAmount.toString() === BigInt(0).toString() &&
                 changeAmount.toString() === BigInt(0).toString() &&
                 (changeCapacity.toString() === BigInt(0).toString() ||
-                    changeCapacity >= helpers.minimalCellCapacityCompatible(changeCellWithoutSudt).toBigInt())
+                    changeCapacity >= helpers.minimalCellCapacityCompatible(changeCellWithoutUdt).toBigInt())
             ) {
                 changeCell.cellOutput.type = undefined;
                 changeCell.data = "0x";
@@ -459,13 +507,13 @@ export class TransactionService {
 
             changeCell.cellOutput.capacity = "0x" + changeCapacity.toString(16);
             if (changeAmount > 0) {
-                changeCell.data = bytes.hexify(number.Uint128LE.pack(changeAmount.toString()));
+                changeCell.data = bytes.hexify(number.Uint128LE.pack(changeAmount.toString())) + xudtData;
 
                 const changeCellMin = helpers.minimalCellCapacityCompatible(changeCell).toBigInt();
-                const changeCellNoSudtMin = helpers.minimalCellCapacityCompatible(changeCellWithoutSudt).toBigInt();
+                const changeCellNoSudtMin = helpers.minimalCellCapacityCompatible(changeCellWithoutUdt).toBigInt();
                 if (changeCapacity >= changeCellMin + changeCellNoSudtMin) {
                     changeCell.cellOutput.capacity = "0x" + changeCellMin.toString(16);
-                    changeCellWithoutSudt.cellOutput.capacity = "0x" + (changeCapacity - changeCellMin).toString(16);
+                    changeCellWithoutUdt.cellOutput.capacity = "0x" + (changeCapacity - changeCellMin).toString(16);
                     splitFlag = true;
                 }
             }
@@ -480,7 +528,7 @@ export class TransactionService {
                 });
             }
             if (splitFlag) {
-                txSkeleton = txSkeleton.update("outputs", (outputs) => outputs.push(changeCellWithoutSudt));
+                txSkeleton = txSkeleton.update("outputs", (outputs) => outputs.push(changeCellWithoutUdt));
             }
         }
 
@@ -488,6 +536,7 @@ export class TransactionService {
     }
 
     injectNftCapacity(txSkeleton: TransactionSkeletonType, nftScript: ScriptType, nftData: string, cells: Cell[]): TransactionSkeletonType {
+        txSkeleton = this.addSecp256CellDep(txSkeleton);
         const nftCells = cells.filter((cell) => TransactionService.cellIsScriptType(cell, nftScript) && cell.data === nftData);
         if (nftCells.length === 0) {
             throw new Error("Nft not found");
