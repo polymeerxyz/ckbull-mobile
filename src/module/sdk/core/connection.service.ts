@@ -241,49 +241,6 @@ export class ConnectionService {
         return helpers.parseAddress(address, { config });
     }
 
-    isAddress(address: string): boolean {
-        try {
-            return (
-                isSecp256k1Blake160Address(address, this.config) ||
-                isAcpAddress(address, this.config) ||
-                isSecp256k1Blake160MultisigAddress(address, this.config) ||
-                isOmnilockAddress(address, this.config) ||
-                this.isOnepassAddress(address) ||
-                this.isPwlockK1AcplAddress(address) ||
-                this.isForceBridgeAddress(address) ||
-                this.isBitAddress(address) ||
-                this.isJoyIdAddress(address)
-            );
-        } catch (err) {
-            return false;
-        }
-    }
-
-    isOnepassAddress(address: string): boolean {
-        const lock = this.getLockFromAddress(address);
-        return lock.codeHash === OnepassConfig[this.env].CODE_HASH && lock.hashType === OnepassConfig[this.env].HASH_TYPE;
-    }
-
-    isForceBridgeAddress(address: string): boolean {
-        const lock = this.getLockFromAddress(address);
-        return lock.codeHash === ForceBridgeConfig[this.env].CODE_HASH && lock.hashType === ForceBridgeConfig[this.env].HASH_TYPE;
-    }
-
-    isBitAddress(address: string): boolean {
-        const lock = this.getLockFromAddress(address);
-        return lock.codeHash === BitConfig[this.env].CODE_HASH && lock.hashType === BitConfig[this.env].HASH_TYPE;
-    }
-
-    isJoyIdAddress(address: string): boolean {
-        const lock = this.getLockFromAddress(address);
-        return lock.codeHash === JoyIdConfig[this.env].CODE_HASH && lock.hashType === JoyIdConfig[this.env].HASH_TYPE;
-    }
-
-    isPwlockK1AcplAddress(address: string): boolean {
-        const lock = this.getLockFromAddress(address);
-        return lock.codeHash === PwlockK1AcplConfig[this.env].CODE_HASH && lock.hashType === PwlockK1AcplConfig[this.env].HASH_TYPE;
-    }
-
     static isAddress(network: Environments, address: string): boolean {
         const config = network === Environments.Mainnet ? LINA : AGGRON4;
         try {
@@ -326,33 +283,33 @@ export class ConnectionService {
         return await dotbit.addresses(domain, CKB_SYMBOL);
     }
 
-    static isOnepassAddress(network: Environments, address: string): boolean {
+    static getLockFromAddressNetwork(network: Environments, address: string): Script {
         const config = network === Environments.Mainnet ? LINA : AGGRON4;
-        const lock = ConnectionService.getLockFromAddress(address, config);
+        return ConnectionService.getLockFromAddress(address, config);
+    }
+
+    static isOnepassAddress(network: Environments, address: string): boolean {
+        const lock = ConnectionService.getLockFromAddressNetwork(network, address);
         return lock.codeHash === OnepassConfig[network].CODE_HASH && lock.hashType === OnepassConfig[network].HASH_TYPE;
     }
 
     static isForceBridgeAddress(network: Environments, address: string): boolean {
-        const config = network === Environments.Mainnet ? LINA : AGGRON4;
-        const lock = ConnectionService.getLockFromAddress(address, config);
+        const lock = ConnectionService.getLockFromAddressNetwork(network, address);
         return lock.codeHash === ForceBridgeConfig[network].CODE_HASH && lock.hashType === ForceBridgeConfig[network].HASH_TYPE;
     }
 
     static isBitAddress(network: Environments, address: string): boolean {
-        const config = network === Environments.Mainnet ? LINA : AGGRON4;
-        const lock = ConnectionService.getLockFromAddress(address, config);
+        const lock = ConnectionService.getLockFromAddressNetwork(network, address);
         return lock.codeHash === BitConfig[network].CODE_HASH && lock.hashType === BitConfig[network].HASH_TYPE;
     }
 
     static isJoyIdAddress(network: Environments, address: string): boolean {
-        const config = network === Environments.Mainnet ? LINA : AGGRON4;
-        const lock = ConnectionService.getLockFromAddress(address, config);
+        const lock = ConnectionService.getLockFromAddressNetwork(network, address);
         return lock.codeHash === JoyIdConfig[network].CODE_HASH && lock.hashType === JoyIdConfig[network].HASH_TYPE;
     }
 
     static isPwlockK1AcplAddress(network: Environments, address: string): boolean {
-        const config = network === Environments.Mainnet ? LINA : AGGRON4;
-        const lock = ConnectionService.getLockFromAddress(address, config);
+        const lock = ConnectionService.getLockFromAddressNetwork(network, address);
         return lock.codeHash === PwlockK1AcplConfig[network].CODE_HASH && lock.hashType === PwlockK1AcplConfig[network].HASH_TYPE;
     }
 }
