@@ -15,6 +15,7 @@ export interface SendTransactionParams {
     mnemonic: string[];
     message?: string;
     to: string;
+    sendAllFunds?: boolean;
     feeRate?: FeeRate;
 }
 

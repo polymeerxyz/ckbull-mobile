@@ -376,12 +376,18 @@ export class WalletService {
         return this.ckbService.transfer(address, to, amount, privateKey, feeRate);
     }
 
-    async sendTransaction(amount: bigint, mnemo: string, to: string, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
+    async sendTransaction(
+        amount: bigint,
+        mnemo: string,
+        to: string,
+        sendAllFunds = false,
+        feeRate: FeeRate = FeeRate.NORMAL,
+    ): Promise<string> {
         await this.synchronize();
         const addresses = this.getAllAddresses();
         const privateKeys = this.getAllPrivateKeys(mnemo);
 
-        return this.ckbService.transferFromCells(this.getCells(), addresses, to, amount, privateKeys, feeRate);
+        return this.ckbService.transferFromCells(this.getCells(), addresses, to, amount, privateKeys, sendAllFunds, feeRate);
     }
 
     async getCKBBalanceFromAccount(accountId = 0, addressType: AddressType = AddressType.Receiving): Promise<CKBBalance> {
