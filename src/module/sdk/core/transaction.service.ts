@@ -499,7 +499,7 @@ export class TransactionService {
             throw new Error("Insufficient capacity");
         }
         if (changeAmount > 0 && changeCapacity < helpers.minimalCellCapacityCompatible(changeCell).toBigInt()) {
-            throw new Error("Insufficient capacity for change cell");
+            throw "insufficient_capacity_for_change_cell";
         }
 
         if (changeCapacity > BigInt(0)) {
