@@ -35,5 +35,5 @@
     "invalid_transaction": "Invalid transaction",
     "invalid_domain": "Invalid domain",
     "minimun_amount_61_ckb": "Minimum transfer (cell) value is 61 CKB",
-    "insufficient_capacity_for_change_cell" : "Insufficient capacity for change cell"
+    "insufficient_capacity_for_change_cell": "Insufficient capacity for change cell"
 }
