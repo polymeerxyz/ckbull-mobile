@@ -14,7 +14,12 @@ export function handleErrorMessage(error: ApiError | any, translate: typeof i18n
     const message = error.body?.message || error.statusText;
 
     if (error && !code && !message) {
-        return { message: translate(error in en.error ? error : "somethingWentWrong", { ns: "error" }), type: "error" };
+        return {
+            message: translate(error instanceof Error ? [error.message as any, "somethingWnetWrong"] : "somethingWentWrong", {
+                ns: "error",
+            }),
+            type: "error",
+        };
     } else if (!code || code === 500) return { message: translate("somethingWentWrong", { ns: "error" }), type: "error" };
     else if (code === 401) return { message: translate("sessionExpired", { ns: "error" }), type: "warning" };
     else return { message: translate(message in en.error ? error.body.message : "somethingWentWrong", { ns: "error" }), type: "error" };

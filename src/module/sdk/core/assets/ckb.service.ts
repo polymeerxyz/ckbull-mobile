@@ -23,7 +23,7 @@ export class CKBService {
 
     async transfer(from: string, to: string, amount: bigint, privateKey: string, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
         if (amount < this.transferCellSize) {
-            throw "minimun_amount_61_ckb";
+            throw new Error("minimun_amount_61_ckb");
         }
 
         let txSkeleton = TransactionSkeleton({ cellProvider: this.connection.getEmptyCellProvider() });
@@ -42,7 +42,7 @@ export class CKBService {
         feeRate: FeeRate = FeeRate.NORMAL,
     ): Promise<string> {
         if (amount < this.transferCellSize) {
-            throw "minimun_amount_61_ckb";
+            throw new Error("minimun_amount_61_ckb");
         }
 
         let txSkeleton = TransactionSkeleton({ cellProvider: this.connection.getEmptyCellProvider() });
