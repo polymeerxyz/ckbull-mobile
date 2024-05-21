@@ -133,7 +133,13 @@ export class CKBSDKService {
     }
 
     async sendTransaction(params: SendTransactionParams): Promise<string> {
-        return this.wallet.sendTransaction(BigInt(params.amount), params.mnemonic.join(" "), params.to, params.feeRate);
+        return this.wallet.sendTransaction(
+            BigInt(params.amount),
+            params.mnemonic.join(" "),
+            params.to,
+            params.sendAllFunds,
+            params.feeRate,
+        );
     }
 
     async sendToken(params: TransferTokensParams): Promise<string> {
