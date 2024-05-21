@@ -14,7 +14,7 @@ const DeleteData = () => {
     const { setState: setWalletState, reset: resetWalletState } = useWalletState();
     const queryClient = useQueryClient();
     const { showModal } = useModal();
-    const { showCancelableDialog } = useCancelableDialog();
+    const { showCancelableDialog, hideDialog } = useCancelableDialog();
 
     const handleDelete = () => {
         showModal(ConfirmPinModal, {
@@ -25,6 +25,7 @@ const DeleteData = () => {
                 await SettingsStorage.clear();
                 await queryClient.invalidateQueries();
                 resetWalletState();
+                hideDialog();
             },
         });
     };
