@@ -15,10 +15,9 @@ const CKBAmountTextField = ({ index, maxAmount, minAmount, validators: validator
     const { isLoading } = useGetBalance(index);
     const { validators } = useCKBAmountTextField({ maxAmount, minAmount, fee, walletIndex: index });
 
-    const validatorsPropWithRequired = rest.required ? { ...validators, ...validatorsProp } : undefined;
     return (
         <BaseAssetAmountTextField
-            validators={validatorsPropWithRequired}
+            validators={{ ...validators, ...validatorsProp }}
             maxDecimals={config.defaultDecimals}
             loading={isLoading}
             units={config.tokenName}
