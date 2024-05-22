@@ -14,7 +14,7 @@ import useCancelableDialog from "module/common/hook/useCancelableDialog";
 
 const DeleteOneWallet = () => {
     const translate = useTranslate();
-    const { showCancelableDialog } = useCancelableDialog();
+    const { showCancelableDialog, hideDialog } = useCancelableDialog();
     const { showModal } = useModal();
     const {
         reset,
@@ -66,6 +66,7 @@ const DeleteOneWallet = () => {
                         serviceInstancesMap.delete(serviceInstancesSize);
                         removeWalletQueries(lastServiceInstanceIndex);
                     }
+                    hideDialog();
                 },
             });
         }

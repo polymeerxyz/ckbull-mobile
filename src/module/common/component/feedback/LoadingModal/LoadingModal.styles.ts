@@ -36,7 +36,7 @@ export const Gradient = styled(LinearGradient)(() => ({
 }));
 
 export const LoadingModalButton = styled(Button, { variant: "secondary" })(({ theme, safeAreaInsets, dimensions }) => ({
-    color: theme.palette.white,
+    color: theme.palette.primary,
     position: "absolute",
     width: dimensions.width - 40,
     marginLeft: 20,
