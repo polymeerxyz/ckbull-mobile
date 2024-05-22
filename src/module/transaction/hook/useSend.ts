@@ -18,7 +18,14 @@ export interface UseSendTransactionReturn extends SignStatus {
 }
 
 export function useSend(): UseSendTransactionReturn {
-    const { senderWalletIndex = 0, asset, amount = "0", receiver, receiverDomainAddress }: SendState = useRecoilValue(sendState);
+    const {
+        senderWalletIndex = 0,
+        asset,
+        amount = "0",
+        receiver,
+        receiverDomainAddress,
+        sendAllFunds,
+    }: SendState = useRecoilValue(sendState);
     const sendCKBMutationResult = useSendCKB(senderWalletIndex);
     const sendFTMutationResult = useSendTokens(senderWalletIndex);
     const sendNFTsMutationResult = useSendNFT(senderWalletIndex);
@@ -90,6 +97,7 @@ export function useSend(): UseSendTransactionReturn {
                     {
                         amount: convertCKBToShannons(amount),
                         to: receiverAddress!,
+                        sendAllFunds,
                         feeRate: fee,
                     },
                     {

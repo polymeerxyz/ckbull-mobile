@@ -9,6 +9,7 @@ export interface SendState {
     message?: string;
     receiverDomainAddress?: BitAccountRecordAddress;
     asset: Asset;
+    sendAllFunds?: boolean;
 }
 
 const sendState = atom<SendState>({

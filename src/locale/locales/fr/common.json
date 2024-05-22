@@ -226,5 +226,6 @@
     "edit": "Modifier",
     "purchaseCompleted": "Achat terminé!",
     "orderCompletedText": "Rappelez-vous qu'il faudra quelques minutes pour que le solde de votre compte reflète le nouveau montant.",
-    "selectAddressOfDomain": "{{count}} adresses CKB détectées sous l'adresse {{domain}}:"
+    "selectAddressOfDomain": "{{count}} adresses CKB détectées sous l'adresse {{domain}}:",
+    "sendAllBalance": "Envoyer tout le solde"
 }
