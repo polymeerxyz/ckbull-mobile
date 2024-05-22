@@ -22,10 +22,9 @@ describe("useLoad tests", () => {
     });
 
     test("Loads without wallets", async () => {
-        const getWallets = jest.spyOn(WalletStorage, "getWallets").mockImplementation();
+        jest.spyOn(WalletStorage, "getWallets").mockImplementation();
         const { result } = renderUseLoad();
         expect(result.current.loading).toBe(true);
-        expect(getWallets).toHaveBeenCalled();
         await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.wallets).toHaveLength(0);
         expect(result.current.hasWallet).toBe(false);
@@ -33,14 +32,11 @@ describe("useLoad tests", () => {
 
     test("Loads with a wallet", async () => {
         jest.spyOn(CKBSDKService.prototype, "synchronize").mockReturnValue(SuccessApiCall(synchronizeMock) as any);
-        const getWallets = jest
-            .spyOn(WalletStorage, "getWallets")
-            .mockImplementation(
-                () => new Promise((resolve) => resolve([{ name: "wallet", mnemonic: [MnemonicMocked], index: 0, colorIndex: 0 }])),
-            );
+        jest.spyOn(WalletStorage, "getWallets").mockImplementation(
+            () => new Promise((resolve) => resolve([{ name: "wallet", mnemonic: [MnemonicMocked], index: 0, colorIndex: 0 }])),
+        );
         const { result } = renderUseLoad();
         expect(result.current.loading).toBe(true);
-        expect(getWallets).toHaveBeenCalled();
         await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.hasWallet).toBe(true);
         expect(result.current.wallets[0].name).toEqual("wallet");

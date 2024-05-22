@@ -14,6 +14,9 @@ export function useLoad(): boolean {
 
     useEffect(() => {
         const getStorage = async () => {
+            // Run migrations
+            await WalletStorage.runMigrations();
+
             //Check if there is a previous wallet
             const wallets = await WalletStorage.getWallets();
 
