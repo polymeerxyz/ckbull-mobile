@@ -40,7 +40,6 @@ const SendModal = createBackdrop(({ onExited, ...rest }: ExposedBackdropProps) =
             }
         });
     };
-
     return (
         <CardNavigatorModal
             navbar={{
@@ -48,7 +47,7 @@ const SendModal = createBackdrop(({ onExited, ...rest }: ExposedBackdropProps) =
                 title: translate("send")!,
                 onBack: activeIndex > 0 ? () => handleIndexChange(activeIndex) : undefined,
                 steps: {
-                    length: sendState.receiverDomainAddress ? 4 : 3,
+                    length: 4,
                     index: activeIndex,
                 },
             }}
