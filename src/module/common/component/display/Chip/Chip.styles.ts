@@ -20,6 +20,11 @@ export const ChipRoot = styled(View)<ChipRootProps>(({ theme, variant, fullWidth
         borderColor: "transparent",
         backgroundColor: theme.palette.mode === "dark" ? theme.palette.gray[900] : theme.palette.gray[700],
     }),
+    ...(variant === "tertiary" && {
+        borderColor: theme.palette.primary,
+        color: theme.palette.primary,
+        backgroundColor: "transparent",
+    }),
 }));
 
 export const ChipText = styled(Text)<ChipTextProps>(({ theme, variant }) => ({

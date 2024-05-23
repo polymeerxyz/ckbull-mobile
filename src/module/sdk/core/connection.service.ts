@@ -10,7 +10,15 @@ import {
     QueryOptions,
 } from "@ckb-lumos/base";
 import { Config, ScriptConfig } from "@ckb-lumos/config-manager";
-import { isSecp256k1Blake160Address, isAcpAddress, isSecp256k1Blake160MultisigAddress } from "@ckb-lumos/common-scripts/lib/helper";
+import {
+    isSecp256k1Blake160Address,
+    isAcpAddress,
+    isSecp256k1Blake160MultisigAddress,
+    isOmnilockAddress,
+} from "@ckb-lumos/common-scripts/lib/helper";
+import { createInstance } from "dotbit";
+import { BitAccountRecordAddress } from "dotbit/lib/fetchers/BitIndexer.type";
+import { CKB_SYMBOL } from "../constants";
 
 // AGGRON4 for test, LINA for main
 const { AGGRON4, LINA } = config.predefined;
@@ -37,19 +45,36 @@ const OnepassConfig: { [key in Environments]: ScriptConfig } = {
     },
 };
 
-const OmnilockConfig: { [key in Environments]: ScriptConfig } = {
+const ForceBridgeConfig: { [key in Environments]: ScriptConfig } = {
     [Environments.Mainnet]: {
-        CODE_HASH: "0x9b819793a64463aed77c615d6cb226eea5487ccfc0783043a587254cda2b6f26",
+        CODE_HASH: "0x9f3aeaf2fc439549cbc870c653374943af96a0658bd6b51be8d8983183e6f52f",
         HASH_TYPE: "type",
-        TX_HASH: "0xdfdb40f5d229536915f2d5403c66047e162e25dedd70a79ef5164356e1facdc8",
+        TX_HASH: "0xaa8ab7e97ed6a268be5d7e26d63d115fa77230e51ae437fc532988dd0c3ce10a",
+        INDEX: "0x1",
+        DEP_TYPE: "code",
+    },
+    [Environments.Testnet]: {
+        CODE_HASH: "0x79f90bb5e892d80dd213439eeab551120eb417678824f282b4ffb5f21bad2e1e",
+        HASH_TYPE: "type",
+        TX_HASH: "0x9154df4f7336402114d04495175b37390ce86a4906d2d4001cf02c3e6d97f39c",
+        INDEX: "0x0",
+        DEP_TYPE: "code",
+    },
+};
+
+const BitConfig: { [key in Environments]: ScriptConfig } = {
+    [Environments.Mainnet]: {
+        CODE_HASH: "0x9376c3b5811942960a846691e16e477cf43d7c7fa654067c9948dfcd09a32137",
+        HASH_TYPE: "type",
+        TX_HASH: "0x440acccb5495e3395c72a8006d384c28840f41df471ef0423475e66f8717cfe4",
         INDEX: "0x0",
         DEP_TYPE: "code",
     },
     [Environments.Testnet]: {
-        CODE_HASH: "0xf329effd1c475a2978453c8600e1eaf0bc2087ee093c3ee64cc96ec6847752cb",
+        CODE_HASH: "",
         HASH_TYPE: "type",
-        TX_HASH: "0x27b62d8be8ed80b9f56ee0fe41355becdb6f6a40aeba82d3900434f43b1c8b60",
-        INDEX: "0x0",
+        TX_HASH: "",
+        INDEX: "",
         DEP_TYPE: "code",
     },
 };
@@ -63,18 +88,38 @@ const PwlockK1AcplConfig: { [key in Environments]: ScriptConfig } = {
         DEP_TYPE: "code",
     },
     [Environments.Testnet]: {
-        CODE_HASH: "",
+        CODE_HASH: "0x58c5f491aba6d61678b7cf7edf4910b1f5e00ec0cde2f42e0abb4fd9aff25a63",
         HASH_TYPE: "type",
-        TX_HASH: "",
+        TX_HASH: "0x4f254814b972421789fafef49d4fee94116863138f72ab1e6392daf3decfaec1",
         INDEX: "0x0",
         DEP_TYPE: "code",
+    },
+};
+
+const JoyIdConfig: { [key in Environments]: ScriptConfig } = {
+    [Environments.Mainnet]: {
+        CODE_HASH: "0xd00c84f0ec8fd441c38bc3f87a371f547190f2fcff88e642bc5bf54b9e318323",
+        HASH_TYPE: "type",
+        TX_HASH: "0xf05188e5f3a6767fc4687faf45ba5f1a6e25d3ada6129dae8722cb282f262493",
+        INDEX: "0x0",
+        DEP_TYPE: "depGroup",
+    },
+    [Environments.Testnet]: {
+        CODE_HASH: "0xd23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac",
+        HASH_TYPE: "type",
+        TX_HASH: "0x4dcf3f3b09efac8995d6cbee87c5345e812d310094651e0c3d9a730f32dc9263",
+        INDEX: "0x0",
+        DEP_TYPE: "depGroup",
     },
 };
 
 class CustomCellProvider implements CellProvider {
     public readonly uri: string;
 
-    constructor(private readonly indexer: IndexerType, private readonly myQueryOptions: QueryOptions) {
+    constructor(
+        private readonly indexer: IndexerType,
+        private readonly myQueryOptions: QueryOptions,
+    ) {
         this.uri = indexer.uri;
     }
 
@@ -105,7 +150,7 @@ export class ConnectionService {
     }
 
     async getBlockchainInfo(): Promise<ChainInfo> {
-        return this.rpc.get_blockchain_info();
+        return this.rpc.getBlockchainInfo();
     }
 
     setBlockHeaderMaps(header: Header): void {
@@ -114,14 +159,14 @@ export class ConnectionService {
     }
 
     async getCurrentBlockHeader(): Promise<Header> {
-        const lastBlockHeader = await this.rpc.get_tip_header();
+        const lastBlockHeader = await this.rpc.getTipHeader();
         this.setBlockHeaderMaps(lastBlockHeader);
         return lastBlockHeader;
     }
 
     async getBlockHeaderFromHash(blockHash: string): Promise<Header> {
         if (!this.blockHeaderHashMap.has(blockHash)) {
-            const header = await this.rpc.get_header(blockHash);
+            const header = await this.rpc.getHeader(blockHash);
             this.setBlockHeaderMaps(header!);
         }
         return this.blockHeaderHashMap.get(blockHash)!;
@@ -129,19 +174,19 @@ export class ConnectionService {
 
     async getBlockHeaderFromNumber(blockNumber: string): Promise<Header> {
         if (!this.blockHeaderNumberMap.has(blockNumber)) {
-            const header = await this.rpc.get_header_by_number(blockNumber);
+            const header = await this.rpc.getHeaderByNumber(blockNumber);
             this.setBlockHeaderMaps(header!);
         }
         return this.blockHeaderNumberMap.get(blockNumber)!;
     }
 
     async getCell(outPoint: OutPoint): Promise<CellWithStatus> {
-        return this.rpc.get_live_cell(outPoint, true);
+        return this.rpc.getLiveCell(outPoint, true);
     }
 
     async getTransactionFromHash(transactionHash: string, useMap = true): Promise<TransactionWithStatus> {
         if (!useMap || !this.transactionMap.has(transactionHash)) {
-            const transaction = await this.rpc.get_transaction(transactionHash);
+            const transaction = await this.rpc.getTransaction(transactionHash);
             this.transactionMap.set(transactionHash, transaction!);
         }
         return this.transactionMap.get(transactionHash)!;
@@ -151,7 +196,7 @@ export class ConnectionService {
         return this.config;
     }
 
-    getConfigAsObject(): helpers.Options {
+    getConfigAsObject(): any {
         return { config: this.config };
     }
 
@@ -196,36 +241,6 @@ export class ConnectionService {
         return helpers.parseAddress(address, { config });
     }
 
-    isAddress(address: string): boolean {
-        try {
-            return (
-                isSecp256k1Blake160Address(address, this.config) ||
-                isAcpAddress(address, this.config) ||
-                isSecp256k1Blake160MultisigAddress(address, this.config) ||
-                this.isOnepassAddress(address) ||
-                this.isOmnilockAddress(address) ||
-                this.isPwlockK1AcplAddress(address)
-            );
-        } catch (err) {
-            return false;
-        }
-    }
-
-    isOnepassAddress(address: string): boolean {
-        const lock = this.getLockFromAddress(address);
-        return lock.code_hash === OnepassConfig[this.env].CODE_HASH && lock.hash_type === OnepassConfig[this.env].HASH_TYPE;
-    }
-
-    isOmnilockAddress(address: string): boolean {
-        const lock = this.getLockFromAddress(address);
-        return lock.code_hash === OmnilockConfig[this.env].CODE_HASH && lock.hash_type === OmnilockConfig[this.env].HASH_TYPE;
-    }
-
-    isPwlockK1AcplAddress(address: string): boolean {
-        const lock = this.getLockFromAddress(address);
-        return lock.code_hash === PwlockK1AcplConfig[this.env].CODE_HASH && lock.hash_type === PwlockK1AcplConfig[this.env].HASH_TYPE;
-    }
-
     static isAddress(network: Environments, address: string): boolean {
         const config = network === Environments.Mainnet ? LINA : AGGRON4;
         try {
@@ -233,30 +248,68 @@ export class ConnectionService {
                 isSecp256k1Blake160Address(address, config) ||
                 isAcpAddress(address, config) ||
                 isSecp256k1Blake160MultisigAddress(address, config) ||
+                isOmnilockAddress(address, config) ||
                 ConnectionService.isOnepassAddress(network, address) ||
-                ConnectionService.isOmnilockAddress(network, address) ||
-                ConnectionService.isPwlockK1AcplAddress(network, address)
+                ConnectionService.isPwlockK1AcplAddress(network, address) ||
+                ConnectionService.isForceBridgeAddress(network, address) ||
+                ConnectionService.isBitAddress(network, address) ||
+                ConnectionService.isJoyIdAddress(network, address)
             );
         } catch (err) {
             return false;
         }
     }
 
-    static isOnepassAddress(network: Environments, address: string): boolean {
-        const config = network === Environments.Mainnet ? LINA : AGGRON4;
-        const lock = ConnectionService.getLockFromAddress(address, config);
-        return lock.code_hash === OnepassConfig[network].CODE_HASH && lock.hash_type === OnepassConfig[network].HASH_TYPE;
+    static isDomain(domain: string): boolean {
+        if (!domain) {
+            return false;
+        }
+        try {
+            const account = ConnectionService.domainExistFromBit(domain);
+            return account !== null;
+        } catch (err) {
+            return false;
+        }
     }
 
-    static isOmnilockAddress(network: Environments, address: string): boolean {
+    static domainExistFromBit(domain: string): boolean {
+        const dotbit = createInstance();
+        const account = dotbit.account(domain);
+        return account.status === 0;
+    }
+
+    static async getAddressFromDomain(domain: string): Promise<BitAccountRecordAddress[]> {
+        const dotbit = createInstance();
+        return await dotbit.addresses(domain, CKB_SYMBOL);
+    }
+
+    static getLockFromAddressNetwork(network: Environments, address: string): Script {
         const config = network === Environments.Mainnet ? LINA : AGGRON4;
-        const lock = ConnectionService.getLockFromAddress(address, config);
-        return lock.code_hash === OmnilockConfig[network].CODE_HASH && lock.hash_type === OmnilockConfig[network].HASH_TYPE;
+        return ConnectionService.getLockFromAddress(address, config);
+    }
+
+    static isOnepassAddress(network: Environments, address: string): boolean {
+        const lock = ConnectionService.getLockFromAddressNetwork(network, address);
+        return lock.codeHash === OnepassConfig[network].CODE_HASH && lock.hashType === OnepassConfig[network].HASH_TYPE;
+    }
+
+    static isForceBridgeAddress(network: Environments, address: string): boolean {
+        const lock = ConnectionService.getLockFromAddressNetwork(network, address);
+        return lock.codeHash === ForceBridgeConfig[network].CODE_HASH && lock.hashType === ForceBridgeConfig[network].HASH_TYPE;
+    }
+
+    static isBitAddress(network: Environments, address: string): boolean {
+        const lock = ConnectionService.getLockFromAddressNetwork(network, address);
+        return lock.codeHash === BitConfig[network].CODE_HASH && lock.hashType === BitConfig[network].HASH_TYPE;
+    }
+
+    static isJoyIdAddress(network: Environments, address: string): boolean {
+        const lock = ConnectionService.getLockFromAddressNetwork(network, address);
+        return lock.codeHash === JoyIdConfig[network].CODE_HASH && lock.hashType === JoyIdConfig[network].HASH_TYPE;
     }
 
     static isPwlockK1AcplAddress(network: Environments, address: string): boolean {
-        const config = network === Environments.Mainnet ? LINA : AGGRON4;
-        const lock = ConnectionService.getLockFromAddress(address, config);
-        return lock.code_hash === PwlockK1AcplConfig[network].CODE_HASH && lock.hash_type === PwlockK1AcplConfig[network].HASH_TYPE;
+        const lock = ConnectionService.getLockFromAddressNetwork(network, address);
+        return lock.codeHash === PwlockK1AcplConfig[network].CODE_HASH && lock.hashType === PwlockK1AcplConfig[network].HASH_TYPE;
     }
 }

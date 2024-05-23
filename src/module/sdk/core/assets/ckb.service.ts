@@ -1,5 +1,6 @@
-import { TransactionSkeleton } from "@ckb-lumos/helpers";
+import { TransactionSkeleton, minimalCellCapacityCompatible } from "@ckb-lumos/helpers";
 import { common } from "@ckb-lumos/common-scripts";
+import { calculateFeeByTransactionSkeleton } from "@spore-sdk/core";
 import { ConnectionService } from "../connection.service";
 import { TransactionService, FeeRate } from "../transaction.service";
 import { Cell } from "@ckb-lumos/lumos";
@@ -23,7 +24,7 @@ export class CKBService {
 
     async transfer(from: string, to: string, amount: bigint, privateKey: string, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
         if (amount < this.transferCellSize) {
-            throw new Error("Minimum transfer (cell) value is 61 CKB");
+            throw new Error("minimun_amount_61_ckb");
         }
 
         let txSkeleton = TransactionSkeleton({ cellProvider: this.connection.getEmptyCellProvider() });
@@ -39,32 +40,56 @@ export class CKBService {
         to: string,
         amount: bigint,
         privateKeys: string[],
+        sendAllFunds = false,
         feeRate: FeeRate = FeeRate.NORMAL,
     ): Promise<string> {
+        if (sendAllFunds) {
+            // Get total capacity from all non type cells
+            amount = cells.filter((cell) => !cell.cellOutput.type).reduce((ant, act) => ant + BigInt(act.cellOutput.capacity), BigInt(0));
+        }
         if (amount < this.transferCellSize) {
-            throw new Error("Minimum transfer (cell) value is 61 CKB");
+            throw new Error("minimun_amount_61_ckb");
         }
 
         let txSkeleton = TransactionSkeleton({ cellProvider: this.connection.getEmptyCellProvider() });
 
         // Add output
         const toScript = this.connection.getLockFromAddress(to);
-        txSkeleton = txSkeleton.update("outputs", (outputs) => {
-            return outputs.push({
-                cell_output: {
-                    capacity: "0x" + amount.toString(16),
-                    lock: toScript,
-                },
-                data: this.transferData,
-            });
-        });
+        const outputCell = {
+            cellOutput: {
+                capacity: "0x" + amount.toString(16),
+                lock: toScript,
+            },
+            data: this.transferData,
+        };
+        txSkeleton = txSkeleton.update("outputs", (outputs) => outputs.push(outputCell));
 
         // Inject capacity
-        txSkeleton = this.transactionService.addSecp256CellDep(txSkeleton);
         txSkeleton = this.transactionService.injectCapacity(txSkeleton, amount, cells);
 
         // Pay fee
-        txSkeleton = await common.payFeeByFeeRate(txSkeleton, fromAddresses, feeRate, undefined, this.connection.getConfigAsObject());
+        if (sendAllFunds) {
+            const minCapacity = minimalCellCapacityCompatible(outputCell);
+            const fee = calculateFeeByTransactionSkeleton(txSkeleton, feeRate);
+
+            let feeInCell = false;
+            txSkeleton = txSkeleton.update("outputs", (outputs) => {
+                const output = outputs.get(0)!;
+                const capacity = BigInt(output.cellOutput.capacity);
+
+                if (minCapacity.add(fee).lte(capacity)) {
+                    feeInCell = true;
+                    output.cellOutput.capacity = "0x" + (capacity - fee.toBigInt()).toString(16);
+                    return outputs.set(0, output);
+                }
+                return outputs;
+            });
+            if (!feeInCell) {
+                throw new Error("Insufficient funds to pay for fees");
+            }
+        } else {
+            txSkeleton = await common.payFeeByFeeRate(txSkeleton, fromAddresses, feeRate, undefined, this.connection.getConfigAsObject());
+        }
 
         // Get signing private keys
         const signingPrivKeys = this.transactionService.extractPrivateKeys(txSkeleton, fromAddresses, privateKeys);
@@ -90,9 +115,9 @@ export class CKBService {
         let occupiedBalanceBI = BigInt(0);
 
         for (const cell of cells) {
-            totalBalanceBI += BigInt(cell.cell_output.capacity);
-            if (cell.cell_output.type) {
-                occupiedBalanceBI += BigInt(cell.cell_output.capacity);
+            totalBalanceBI += BigInt(cell.cellOutput.capacity);
+            if (cell.cellOutput.type) {
+                occupiedBalanceBI += BigInt(cell.cellOutput.capacity);
             }
         }
         const freeBalance = Number(totalBalanceBI - occupiedBalanceBI) / 10 ** 8;

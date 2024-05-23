@@ -1,6 +1,6 @@
 import { mnemonic, ExtendedPrivateKey, AccountExtendedPublicKey, AddressType } from "@ckb-lumos/hd";
 import { TransactionSkeletonType, TransactionSkeleton } from "@ckb-lumos/helpers";
-import { HashType, utils } from "@ckb-lumos/lumos";
+import { HashType } from "@ckb-lumos/lumos";
 import { TransactionWithStatus } from "@ckb-lumos/base";
 import { common, dao } from "@ckb-lumos/common-scripts";
 import { ConnectionService } from "./connection.service";
@@ -12,6 +12,7 @@ import { Cell, Script } from "@ckb-lumos/lumos";
 import { QueryOptions } from "@ckb-lumos/base";
 import { Nft, NftService } from "./assets/nft.service";
 import { Logger } from "../utils/logger";
+import { number } from "@ckb-lumos/codec";
 
 export enum AddressScriptType {
     SECP256K1_BLAKE160 = "SECP256K1_BLAKE160",
@@ -238,8 +239,8 @@ export class WalletService {
     getLock(accountId = 0, addressType: AddressType, script: AddressScriptType = AddressScriptType.SECP256K1_BLAKE160): Script {
         const template = this.connection.getConfig().SCRIPTS[script];
         const lockScript = {
-            code_hash: template!.CODE_HASH,
-            hash_type: template!.HASH_TYPE,
+            codeHash: template!.CODE_HASH,
+            hashType: template!.HASH_TYPE,
             args: this.accountPublicKey.publicKeyInfo(addressType, accountId).blake160,
         };
 
@@ -375,12 +376,18 @@ export class WalletService {
         return this.ckbService.transfer(address, to, amount, privateKey, feeRate);
     }
 
-    async sendTransaction(amount: bigint, mnemo: string, to: string, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
+    async sendTransaction(
+        amount: bigint,
+        mnemo: string,
+        to: string,
+        sendAllFunds = false,
+        feeRate: FeeRate = FeeRate.NORMAL,
+    ): Promise<string> {
         await this.synchronize();
         const addresses = this.getAllAddresses();
         const privateKeys = this.getAllPrivateKeys(mnemo);
 
-        return this.ckbService.transferFromCells(this.getCells(), addresses, to, amount, privateKeys, feeRate);
+        return this.ckbService.transferFromCells(this.getCells(), addresses, to, amount, privateKeys, sendAllFunds, feeRate);
     }
 
     async getCKBBalanceFromAccount(accountId = 0, addressType: AddressType = AddressType.Receiving): Promise<CKBBalance> {
@@ -395,13 +402,14 @@ export class WalletService {
     // -----------------------------
     // -- Token service functions --
     // -----------------------------
-    // Deprecated in accounts
+    // Deprecated in accounts, only sudt
     async issueTokens(amount: number, mnemo: string, accountId = 0, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
         const { address, privateKey } = this.getAddressAndPrivateKey(mnemo, accountId);
 
         return this.tokenService.issue(address, amount, privateKey, feeRate);
     }
 
+    // Deprecated in accounts, only sudt
     async transferTokensSingleAccount(
         amount: number,
         mnemo: string,
@@ -445,12 +453,35 @@ export class WalletService {
         return this.nftService.getBalanceFromCells(this.getCells());
     }
 
-    async transferNfts(mnemo: string, to: string, nft: Nft, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
+    async transferNft(mnemo: string, to: string, nft: Nft, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
         await this.synchronize();
         const addresses = this.getAllAddresses();
         const privateKeys = this.getAllPrivateKeys(mnemo);
 
         return this.nftService.transferFromCells(this.getCells(), addresses, to, nft, privateKeys, feeRate);
+    }
+
+    async mintSporeNft(
+        mnemo: string,
+        to: string,
+        mimeType: string,
+        content: string,
+        immortal = false,
+        feeRate: FeeRate = FeeRate.NORMAL,
+    ): Promise<string> {
+        await this.synchronize();
+        const addresses = this.getAllAddresses();
+        const privateKeys = this.getAllPrivateKeys(mnemo);
+
+        return this.nftService.mintSporeFromCells(this.getCells(), addresses, to, mimeType, content, immortal, privateKeys, feeRate);
+    }
+
+    async meltSporeNft(mnemo: string, to: string, nft: Nft, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
+        await this.synchronize();
+        const addresses = this.getAllAddresses();
+        const privateKeys = this.getAllPrivateKeys(mnemo);
+
+        return this.nftService.meltSporeNftFromCells(this.getCells(), addresses, to, nft, privateKeys, feeRate);
     }
 
     // ---------------------------
@@ -470,7 +501,7 @@ export class WalletService {
     }
 
     async withdrawOrUnlockFromCell(cell: Cell, mnemo: string, feeRate: FeeRate = FeeRate.NORMAL): Promise<string> {
-        const { address, privateKey } = this.getAddressAndPrivKeyFromLock(mnemo, cell.cell_output.lock);
+        const { address, privateKey } = this.getAddressAndPrivKeyFromLock(mnemo, cell.cellOutput.lock);
         const feeAddresses = this.getAllAddresses();
         const privateKeys = this.getAllPrivateKeys(mnemo);
         const to = this.getNextAddress();
@@ -542,20 +573,20 @@ export class WalletService {
         if (tx.get("inputs").size === 1) {
             // It's either unlock or withdraw
             const input = tx.get("inputs").get(0)!;
-            if (!input.cell_output.type) {
+            if (!input.cellOutput.type) {
                 throw new Error("Invalid inputs kind");
             }
 
             const scriptType: ScriptType = {
-                codeHash: input.cell_output.type.code_hash,
-                hashType: input.cell_output.type.hash_type as HashType,
-                args: input.cell_output.type.args,
+                codeHash: input.cellOutput.type.codeHash,
+                hashType: input.cellOutput.type.hashType as HashType,
+                args: input.cellOutput.type.args,
             };
             if (!TransactionService.isScriptTypeScript(scriptType, this.connection.getConfig().SCRIPTS.DAO!)) {
                 throw new Error("Invalid inputs kind");
             }
 
-            if (input.data.length === 18 && Number(utils.readBigUInt64LE(input.data)) === 0) {
+            if (input.data.length === 18 && Number(number.Uint64LE.unpack(input.data).toBigInt()) === 0) {
                 // Cell is deposit type, so we are withdrawing
                 return TransactionType.WITHDRAW_DAO;
             }
@@ -568,14 +599,14 @@ export class WalletService {
         }
 
         const output = tx.get("outputs").get(0)!;
-        if (!output.cell_output.type) {
+        if (!output.cellOutput.type) {
             return TransactionType.SEND_NATIVE_TOKEN;
         }
 
         const scriptType: ScriptType = {
-            codeHash: output.cell_output.type.code_hash,
-            hashType: output.cell_output.type.hash_type as HashType,
-            args: output.cell_output.type.args,
+            codeHash: output.cellOutput.type.codeHash,
+            hashType: output.cellOutput.type.hashType as HashType,
+            args: output.cellOutput.type.args,
         };
 
         if (TransactionService.isScriptTypeScript(scriptType, this.connection.getConfig().SCRIPTS.SUDT!)) {
@@ -583,7 +614,7 @@ export class WalletService {
         }
 
         if (TransactionService.isScriptTypeScript(scriptType, this.connection.getConfig().SCRIPTS.DAO!)) {
-            if (output.data.length === 18 && Number(utils.readBigUInt64LE(output.data)) === 0) {
+            if (output.data.length === 18 && Number(number.Uint64LE.unpack(output.data)) === 0) {
                 return TransactionType.DEPOSIT_DAO;
             }
         }
@@ -606,25 +637,25 @@ export class WalletService {
         let txSkeleton = tx.set("cellProvider", this.connection.getEmptyCellProvider());
 
         if (type === TransactionType.SEND_NATIVE_TOKEN || type === TransactionType.DEPOSIT_DAO) {
-            const capacity = BigInt(output!.cell_output.capacity);
+            const capacity = BigInt(output!.cellOutput.capacity);
             txSkeleton = this.transactionService.injectCapacity(txSkeleton, capacity, cells);
         } else if (type === TransactionType.SEND_TOKEN) {
-            const capacity = BigInt(output!.cell_output.capacity);
-            const token = output!.cell_output.type!.args;
-            const amount = utils.readBigUInt128LE(output!.data);
+            const capacity = BigInt(output!.cellOutput.capacity);
+            const token = output!.cellOutput.type!.args;
+            const amount = number.Uint128LE.unpack(output!.data).toBigInt();
             txSkeleton = this.transactionService.injectTokenCapacity(txSkeleton, token, amount, capacity, cells);
         } else if (type === TransactionType.SEND_NFT) {
             const nftScript: ScriptType = {
-                args: output!.cell_output.type!.args,
-                codeHash: output!.cell_output.type!.code_hash,
-                hashType: output!.cell_output.type!.hash_type,
+                args: output!.cellOutput.type!.args,
+                codeHash: output!.cellOutput.type!.codeHash,
+                hashType: output!.cellOutput.type!.hashType,
             };
             txSkeleton = this.transactionService.injectNftCapacity(txSkeleton, nftScript, output!.data, cells);
         } else if (type === TransactionType.WITHDRAW_DAO) {
             txSkeleton = TransactionSkeleton({ cellProvider: this.connection.getEmptyCellProvider() });
             txSkeleton = await dao.withdraw(txSkeleton, input!, undefined, this.connection.getConfigAsObject());
         } else if (type === TransactionType.UNLOCK_DAO) {
-            const { address, privateKey } = this.getAddressAndPrivKeyFromLock(mnemonic, input!.cell_output.lock);
+            const { address, privateKey } = this.getAddressAndPrivKeyFromLock(mnemonic, input!.cellOutput.lock);
             const to = this.getNextAddress();
 
             txSkeleton = TransactionSkeleton({ cellProvider: this.connection.getEmptyCellProvider() });
@@ -645,6 +676,6 @@ export class WalletService {
 
     getAmountFromTransaction = (transaction: TransactionSkeletonType): bigint => {
         const outputs = transaction.get("outputs").toArray();
-        return outputs.reduce((acc: any, output: Cell) => acc + BigInt(parseInt(output["cell_output"]["capacity"], 16)), BigInt(0));
+        return outputs.reduce((acc: any, output: Cell) => acc + BigInt(parseInt(output["cellOutput"]["capacity"], 16)), BigInt(0));
     };
 }

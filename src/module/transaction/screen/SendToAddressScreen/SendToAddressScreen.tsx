@@ -1,6 +1,4 @@
-import { Col, Form, IconButton, PressableText, Typography, useSetTab, useToast } from "@peersyst/react-native-components";
-import TextField from "module/common/component/input/TextField/TextField";
-import { useTheme } from "@peersyst/react-native-styled";
+import { Col, Form, PressableText, Typography, useSetTab, useToast } from "@peersyst/react-native-components";
 import Button from "module/common/component/input/Button/Button";
 import sendRecoilState from "module/transaction/state/SendState";
 import { useState } from "react";
@@ -8,10 +6,9 @@ import { SendScreens } from "module/transaction/component/core/SendModal/SendMod
 import { useRecoilState } from "recoil";
 import WalletSelector from "module/wallet/component/input/WalletSelector/WalletSelector";
 import useUncommittedTransaction from "module/transaction/hook/useUncommittedTransaction";
-import useSelectedNetwork from "module/settings/hook/useSelectedNetwork";
 import { useTranslate } from "module/common/hook/useTranslate";
-import { CameraIcon } from "icons";
 import QrScanner from "module/common/component/input/QrScanner/QrScanner";
+import AddressOfDomainTextField from "module/transaction/component/input/AddressOfDomainTextField/AddressOfDomainTextField";
 
 export interface SendForm {
     sender: number;
@@ -21,13 +18,13 @@ export interface SendForm {
 const SendToAddressScreen = () => {
     const translate = useTranslate();
     const [sendState, setSendState] = useRecoilState(sendRecoilState);
-    const [receiverAddress, setReceiverAddress] = useState(sendState.receiverAddress || "");
+    const [receiverAddress, setReceiverAddress] = useState(sendState.receiver || "");
+    const [receiverDomainAddress, setReceiverDomainAddress] = useState(sendState.receiverDomainAddress || undefined);
     const [scanQr, setScanQr] = useState(false);
-    const { palette } = useTheme();
+
     const { showToast, hideToast } = useToast();
     const setTab = useSetTab();
     const uncommittedTransaction = useUncommittedTransaction();
-    const network = useSelectedNetwork();
 
     const handleAddressScan = (data: string) => {
         setReceiverAddress(data);
@@ -42,9 +39,22 @@ const SendToAddressScreen = () => {
         });
     };
 
+    const handleSenderChange = (sender: number) => {
+        setSendState((oldState) => ({ ...oldState, senderWalletIndex: sender }));
+    };
+
     const handleSubmit = ({ sender, receiver }: SendForm) => {
-        setSendState((oldState) => ({ ...oldState, senderWalletIndex: sender, receiverAddress: receiver }));
-        setTab(SendScreens.AMOUNT_AND_MESSAGE);
+        setSendState((oldState) => ({
+            ...oldState,
+            senderWalletIndex: sender,
+            receiver: receiver,
+            receiverDomainAddress: receiverDomainAddress,
+        }));
+        if (receiverDomainAddress) {
+            setTab(SendScreens.SELECT_ADDRESS);
+        } else {
+            setTab(SendScreens.AMOUNT_AND_MESSAGE);
+        }
     };
 
     return (
@@ -55,23 +65,22 @@ const SendToAddressScreen = () => {
                         label={translate("select_a_wallet")}
                         required
                         name="sender"
+                        onChange={handleSenderChange}
                         defaultValue={sendState.senderWalletIndex}
                     />
-                    <TextField
+                    <AddressOfDomainTextField
                         label={translate("send_to")}
                         placeholder={translate("address")}
-                        suffix={
-                            <IconButton style={{ color: palette.primary, fontSize: 24 }} onPress={() => setScanQr(true)}>
-                                <CameraIcon />
-                            </IconButton>
-                        }
                         name="receiver"
-                        validators={{ address: network }}
                         value={receiverAddress}
                         onChange={setReceiverAddress}
                         autoCapitalize="none"
                         autoCorrect={false}
                         style={{ component: { backgroundColor: "transparent" } }}
+                        domainAddress={receiverDomainAddress}
+                        onDomainAddressChange={setReceiverDomainAddress}
+                        onScanQr={() => setScanQr(true)}
+                        required
                     />
                     <Col gap="5%">
                         {uncommittedTransaction && (

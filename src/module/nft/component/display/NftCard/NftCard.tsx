@@ -3,15 +3,24 @@ import MainListCard from "module/main/component/display/MainListCard/MainListCar
 import { TouchableWithoutFeedback } from "react-native";
 import { NftCardImage } from "./NftCard.styles";
 import { NftCardProps } from "./NftCard.types";
+import { NftTypes } from "ckb-peersyst-sdk";
 
 const NftCard = ({ nft }: NftCardProps): JSX.Element => {
-    const {
-        nftName,
-        tokenUri,
-        total,
-        tokenId,
-        data: { description },
-    } = nft;
+    const nftName = nft.type === NftTypes.Spore ? nft.tokenId : nft.nftName;
+    let tokenUri = nft.type !== NftTypes.Spore ? nft.tokenUri : undefined;
+    const tokenId = nft.type !== NftTypes.Spore ? nft.tokenId : null;
+    const total = nft.type === NftTypes.MNft ? nft.total : null;
+    let description = nft.type !== NftTypes.Spore ? nft.data.description : null;
+
+    // Image if spore
+    if (nft.type === NftTypes.Spore && nft.contentType.type === "image") {
+        const imageB64 = Buffer.from(nft.contentEncoded.toString().slice(2), "hex").toString("base64");
+        tokenUri = `data:${nft.contentType.mediaType};base64,${imageB64}`;
+    }
+    if (nft.type === NftTypes.Spore && nft.contentType.type === "text") {
+        // text/plain text/csv
+        description = nft.content;
+    }
 
     const showTotal = tokenId && typeof total === "number";
 

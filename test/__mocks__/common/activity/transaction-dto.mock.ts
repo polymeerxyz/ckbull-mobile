@@ -2,11 +2,11 @@ import { TransactionDto } from "module/api/service";
 
 const inputOrOutputContent = {
     data: "0x",
-    cell_output: {
+    cellOutput: {
         lock: {
             args: "0xc1dcd2f276d4821d71464a485a1ab26220c05f26",
-            code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
-            hash_type: "type",
+            codeHash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+            hashType: "type",
         },
         capacity: "0x1718c7e00",
     },

@@ -1,11 +1,5 @@
 // TODO change @nervosnetwork/ckb-sdk-core Cell and RawTransaction types
-import { Cell, HashType, RawTransaction } from "@ckb-lumos/lumos";
-
-export interface NftScript {
-    args: string;
-    codeHash: string;
-    hashType: HashType;
-}
+import { Cell, RawTransaction, Script } from "@ckb-lumos/lumos";
 
 export interface MintNftParams {
     name: string;
@@ -15,14 +9,14 @@ export interface MintNftParams {
     targetAddress: string;
     extraData: Buffer;
     fee?: number;
-    factoryContractTypeScript?: NftScript;
-    factoryContractDep?: NftScript;
+    factoryContractTypeScript?: Script;
+    factoryContractDep?: Script;
     extraDeps?: string[];
 }
 
 export interface MintNftResponse {
     rawTransaction: RawTransaction;
-    typeScript: NftScript;
+    typeScript: Script;
     usedCapacity: bigint;
     inputCells: Cell[];
 }
@@ -46,17 +40,17 @@ export interface FactoryConstants {
 
 export interface CreateNewTypeScriptParams {
     rawTransaction: RawTransaction;
-    factoryTypeScript: NftScript;
+    factoryTypeScript: Script;
     nftTypeCodeHash: string;
     outputIndex: string;
 }
 
 export interface MintParams {
-    nftContractTypeScript: NftScript;
-    factoryTypeScript: NftScript;
+    nftContractTypeScript: Script;
+    factoryTypeScript: Script;
     sourceAddress: string;
     targetAddress: string;
-    nftContractDep?: NftScript;
+    nftContractDep?: Script;
     extraDeps?: string[];
     fee?: number;
     data?: any;
@@ -64,7 +58,7 @@ export interface MintParams {
 
 export interface MintResponse {
     rawTransaction: RawTransaction;
-    nftTypeScript: NftScript;
+    nftTypeScript: Script;
     usedCapacity: bigint;
     inputCells: Cell[];
 }
@@ -79,17 +73,17 @@ export interface ReadNftResponse {
 
 export interface NftFactoryCell {
     mint: (mintData: MintNftParams) => Promise<MintNftResponse>;
-    readOne: (typeScript: NftScript) => Promise<ReadFactoryResponse>;
-    isCellNRC721: (factoryTypeScript: NftScript) => Promise<boolean>;
+    readOne: (typeScript: Script) => Promise<ReadFactoryResponse>;
+    isCellNRC721: (factoryTypeScript: Script) => Promise<boolean>;
     CONSTANTS: FactoryConstants;
 }
 
 export interface NftSdkCell {
-    getAllFactoryNftsByAdress: ({ userAdress, factoryTypeScript }: { userAdress: string; factoryTypeScript: NftScript }) => Promise<Cell[]>;
-    createNewTypeScript: (params: CreateNewTypeScriptParams) => NftScript;
+    getAllFactoryNftsByAdress: ({ userAdress, factoryTypeScript }: { userAdress: string; factoryTypeScript: Script }) => Promise<Cell[]>;
+    createNewTypeScript: (params: CreateNewTypeScriptParams) => Script;
     mint: (params: MintParams) => Promise<MintResponse>;
-    read: (nftTypeScript: NftScript) => Promise<ReadNftResponse>;
-    isCellNRC721: (nftTypeScript: NftScript) => Promise<boolean>;
+    read: (nftTypeScript: Script) => Promise<ReadNftResponse>;
+    isCellNRC721: (nftTypeScript: Script) => Promise<boolean>;
 }
 
 export interface NftSdkUtils {

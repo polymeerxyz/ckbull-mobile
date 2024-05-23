@@ -18,7 +18,7 @@ export interface EnterWalletMnemonicScreenProps {
 
 const EnterWalletMnemonicScreen = ({ onSubmit, submitText }: EnterWalletMnemonicScreenProps): JSX.Element => {
     const translateError = useTranslate("error");
-    const { setMnemonic } = useCreateWallet();
+    const { state, setMnemonic } = useCreateWallet();
     const [submitted, setSubmitted] = useState(false);
     const { showToast } = useToast();
 
@@ -47,7 +47,7 @@ const EnterWalletMnemonicScreen = ({ onSubmit, submitText }: EnterWalletMnemonic
             <Form onSubmit={handleSubmit}>
                 <Col gap={24} style={{ marginTop: 5 }}>
                     <MnemonicInput />
-                    <Button type="submit" fullWidth>
+                    <Button type="submit" fullWidth disabled={!!state.mnemonic}>
                         {submitText}
                     </Button>
                 </Col>

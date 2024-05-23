@@ -32,5 +32,8 @@
     "sign_in_request_already_signed": "Petición de inicio de sesión ya firmada",
     "transaction_request_already_signed": "Petición de transacción ya firmada",
     "transaction_request_already_declined": "Petición de transacción ya rechazada",
-    "invalid_transaction": "Transacción inválida"
+    "invalid_transaction": "Transacción inválida",
+    "invalid_domain": "Dominio inválido",
+    "minimun_amount_61_ckb": "El valor mínimo de transferencia (célula) es 61 CKB",
+    "insufficient_capacity_for_change_cell": "Capacidad insuficiente para la célula de cambio"
 }

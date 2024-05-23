@@ -8,7 +8,7 @@ const EmptyListComponent = ({ title, text }: EmptyListComponentProps): JSX.Eleme
     const translate = useTranslate("error");
     return (
         <Col alignItems="center" style={{ paddingTop: "10%", paddingHorizontal: "5%" }}>
-            <Advise gap={0} title={title || translate("nothing_to_show")} text={text} />
+            <Advise gap={8} title={title || translate("nothing_to_show")} text={text} />
         </Col>
     );
 };

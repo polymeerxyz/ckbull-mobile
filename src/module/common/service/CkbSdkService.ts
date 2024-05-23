@@ -19,6 +19,8 @@ import {
     FullTransaction,
     GetNftFromPartialTransactionParams,
     GetTransactionTypeParams,
+    MeltNftParams,
+    MintNftParams,
     SendTransactionParams,
     SignPartialTransactionParams,
     TransferNftParams,
@@ -131,7 +133,13 @@ export class CKBSDKService {
     }
 
     async sendTransaction(params: SendTransactionParams): Promise<string> {
-        return this.wallet.sendTransaction(BigInt(params.amount), params.mnemonic.join(" "), params.to, params.feeRate);
+        return this.wallet.sendTransaction(
+            BigInt(params.amount),
+            params.mnemonic.join(" "),
+            params.to,
+            params.sendAllFunds,
+            params.feeRate,
+        );
     }
 
     async sendToken(params: TransferTokensParams): Promise<string> {
@@ -139,7 +147,22 @@ export class CKBSDKService {
     }
 
     async sendNft(params: TransferNftParams): Promise<string> {
-        return this.wallet.transferNfts(params.mnemonic.join(" "), params.to, params.nft, params.feeRate);
+        return this.wallet.transferNft(params.mnemonic.join(" "), params.to, params.nft, params.feeRate);
+    }
+
+    async mintNft(params: MintNftParams): Promise<string> {
+        return this.wallet.mintSporeNft(
+            params.mnemonic.join(" "),
+            params.to,
+            params.mimeType,
+            params.content,
+            params.immortal,
+            params.feeRate,
+        );
+    }
+
+    async meltNft(params: MeltNftParams): Promise<string> {
+        return this.wallet.meltSporeNft(params.mnemonic.join(" "), params.to, params.nft, params.feeRate);
     }
 
     async depositInDAO(params: DepositInDAOParams): Promise<string> {
@@ -172,11 +195,11 @@ export class CKBSDKService {
 
     getOutputAddressesFromTransaction({ transaction }: AmountFromTransactionParams): string[] {
         const outputs = transaction.get("outputs");
-        return outputs.map((output) => this.connectionService.getAddressFromLock(output.cell_output.lock)).toArray();
+        return outputs.map((output) => this.connectionService.getAddressFromLock(output.cellOutput.lock)).toArray();
     }
 
     getInputAddressesFromTransaction({ transaction }: AmountFromTransactionParams): string[] {
         const inputs = transaction.get("inputs");
-        return inputs.map((input) => this.connectionService.getAddressFromLock(input.cell_output.lock)).toArray();
+        return inputs.map((input) => this.connectionService.getAddressFromLock(input.cellOutput.lock)).toArray();
     }
 }

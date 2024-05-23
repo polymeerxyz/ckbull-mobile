@@ -15,6 +15,7 @@ export interface SendTransactionParams {
     mnemonic: string[];
     message?: string;
     to: string;
+    sendAllFunds?: boolean;
     feeRate?: FeeRate;
 }
 
@@ -27,6 +28,23 @@ export interface TransferTokensParams {
 }
 
 export interface TransferNftParams {
+    mnemonic: string[];
+    to: string;
+    nft: Nft;
+    feeRate?: FeeRate;
+}
+
+export interface MintNftParams {
+    mnemonic: string[];
+    to: string;
+    nft: Nft;
+    mimeType: string;
+    content: string;
+    immortal?: boolean;
+    feeRate?: FeeRate;
+}
+
+export interface MeltNftParams {
     mnemonic: string[];
     to: string;
     nft: Nft;

@@ -1,8 +1,12 @@
-import { ChipProps } from "./Chip.types";
+import { ChipProps as BaseChipProps } from "./Chip.types";
 import { ChipRoot, ChipText } from "./Chip.styles";
 import { TouchableWithoutFeedback } from "react-native";
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { extractTextStyles } from "utils/extractTextStyles";
+
+export interface ChipProps extends Omit<BaseChipProps, "label"> {
+    label: React.ReactNode;
+}
 
 const Chip = ({ label, variant = "secondary", style, fullWidth, onPress }: ChipProps): JSX.Element => {
     const [textStyles, rootStyles] = useMemo(() => extractTextStyles({ ...style }), [style]);

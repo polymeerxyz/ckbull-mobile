@@ -8,10 +8,11 @@ import useServiceInstance from "module/wallet/hook/useServiceInstance";
 import { useSend } from "module/transaction/hook/useSend";
 import SendModal from "module/transaction/component/core/SendModal/SendModal";
 import CallbackModal from "module/common/component/feedback/SignModal/SignModal";
+import useGetBalance from "module/wallet/query/useGetBalance";
 
 const SendConfirmationScreen = (): JSX.Element => {
     const translate = useTranslate();
-    const { amount, senderWalletIndex, receiverAddress, message, asset } = useRecoilValue(sendState);
+    const { amount, senderWalletIndex, receiver, receiverDomainAddress, message, asset, sendAllFunds } = useRecoilValue(sendState);
     const {
         state: { wallets },
     } = useWalletState();
@@ -21,17 +22,21 @@ const SendConfirmationScreen = (): JSX.Element => {
     const { sendTransaction, ...restSendTransactionWithStatus } = useSend();
     const { hideModal } = useModal();
 
+    const receiverAddress = receiverDomainAddress ? receiverDomainAddress.value : receiver!;
+
     function closeSendModal() {
         hideModal(SendModal.id);
     }
 
+    const { data: { freeBalance = 0 } = {} } = useGetBalance(index);
+    const amountToSend = sendAllFunds ? freeBalance : amount;
     return (
         <CallbackModal onSign={sendTransaction} {...restSendTransactionWithStatus} onError={closeSendModal} onExited={closeSendModal}>
             {({ showModal, isSuccess, isLoading }) => (
                 <Col gap={24} onStartShouldSetResponder={() => true}>
                     <SendSummary
                         showTotal
-                        amount={amount!}
+                        amount={amountToSend!}
                         receiverAddress={receiverAddress!}
                         token={asset.ft}
                         nft={asset.nft}

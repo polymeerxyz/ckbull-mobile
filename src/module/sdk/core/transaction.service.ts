@@ -1,13 +1,15 @@
 import { ScriptConfig } from "@ckb-lumos/config-manager";
-import { Cell, commons, hd, helpers, Script, utils, HashType, Transaction as LumosTx } from "@ckb-lumos/lumos";
+import { Cell, commons, hd, helpers, Script, HashType, Transaction as LumosTx } from "@ckb-lumos/lumos";
 import { sealTransaction, TransactionSkeletonType } from "@ckb-lumos/helpers";
-import { TransactionWithStatus, values, core, WitnessArgs } from "@ckb-lumos/base";
+import { TransactionWithStatus, values, WitnessArgs } from "@ckb-lumos/base";
 import { TransactionCollector as TxCollector } from "@ckb-lumos/ckb-indexer";
-import { Reader, normalizers } from "@ckb-lumos/toolkit";
 import { CKBIndexerQueryOptions } from "@ckb-lumos/ckb-indexer/src/type";
 import { ConnectionService } from "./connection.service";
 import { Logger } from "../utils/logger";
 import { NftService } from "./assets/nft.service";
+import { number, bytes } from "@ckb-lumos/codec";
+import { blockchain } from "@ckb-lumos/base";
+import { XudtConfig } from "./assets/token.service";
 
 const { ScriptValue } = values;
 
@@ -82,30 +84,46 @@ export class TransactionService {
     }
 
     static addCellDep(txSkeleton: TransactionSkeletonType, scriptConfig: ScriptConfig): TransactionSkeletonType {
+        const { TX_HASH, INDEX, DEP_TYPE } = scriptConfig;
+
+        if (txSkeleton.has("cellDeps")) {
+            const cellDeps = txSkeleton.get("cellDeps");
+            if (cellDeps.filter((cell) => cell.outPoint.txHash === TX_HASH && cell.outPoint.index === INDEX).size > 0) {
+                return txSkeleton;
+            }
+        }
+
         return txSkeleton.update("cellDeps", (cellDeps) => {
             return cellDeps.push({
-                out_point: {
-                    tx_hash: scriptConfig.TX_HASH,
-                    index: scriptConfig.INDEX,
+                outPoint: {
+                    txHash: TX_HASH,
+                    index: INDEX,
                 },
-                dep_type: scriptConfig.DEP_TYPE,
+                depType: DEP_TYPE,
             });
         });
     }
 
-    static isScriptTypeScript(scriptType: ScriptType, scriptConfig: ScriptConfig): boolean {
+    static isScriptTypeScript(scriptType: Script, scriptConfig: ScriptConfig): boolean {
         return scriptConfig.CODE_HASH === scriptType.codeHash && scriptConfig.HASH_TYPE === scriptType.hashType;
     }
 
     static cellIsScriptType(cell: Cell, scriptType: ScriptType): boolean {
-        const { type } = cell.cell_output;
-        return !!type && type.args === scriptType.args && type.code_hash === scriptType.codeHash && type.hash_type === scriptType.hashType;
+        const { type } = cell.cellOutput;
+        return !!type && type.args === scriptType.args && type.codeHash === scriptType.codeHash && type.hashType === scriptType.hashType;
+    }
+
+    private isScriptTokenScript(scriptType: ScriptType): boolean {
+        const sudt = this.connection.getConfig().SCRIPTS.SUDT!;
+        const xudt = XudtConfig[this.connection.getEnvironment()];
+
+        return TransactionService.isScriptTypeScript(scriptType, sudt) || TransactionService.isScriptTypeScript(scriptType, xudt);
     }
 
     private cellIsTokenType(cell: Cell, tokenHash: string): boolean {
-        const sudt = this.connection.getConfig().SCRIPTS.SUDT!;
-        const { type } = cell.cell_output;
-        return !!type && type.code_hash === sudt.CODE_HASH && type.hash_type === sudt.HASH_TYPE && type.args === tokenHash;
+        const { type } = cell.cellOutput;
+
+        return !!type && type.args === tokenHash && this.isScriptTokenScript(type);
     }
 
     private getTransactionCollector(address: string, includeStatus = false, toBlock?: string, fromBlock?: string): any {
@@ -132,8 +150,8 @@ export class TransactionService {
         let isRealSender = false;
         for (let i = 0; i < lumosTx.transaction.inputs.length; i += 1) {
             const input = lumosTx.transaction.inputs[i];
-            const inputTx = await this.connection.getTransactionFromHash(input.previous_output.tx_hash);
-            const outputIdx = parseInt(input.previous_output.index, 16);
+            const inputTx = await this.connection.getTransactionFromHash(input.previousOutput.txHash);
+            const outputIdx = parseInt(input.previousOutput.index, 16);
             const output = inputTx.transaction.outputs[outputIdx];
             const inputAddress = this.connection.getAddressFromLock(output.lock);
             inputs.push({
@@ -148,15 +166,15 @@ export class TransactionService {
                 if (output.type) {
                     inputType = {
                         args: output.type.args,
-                        codeHash: output.type.code_hash,
-                        hashType: output.type.hash_type,
+                        codeHash: output.type.codeHash,
+                        hashType: output.type.hashType,
                     };
-                    const data = inputTx.transaction.outputs_data[outputIdx];
+                    const data = inputTx.transaction.outputsData[outputIdx];
                     if (data && data !== "0x") {
-                        if (data.length === 34) {
-                            inputData = Number(utils.readBigUInt128LE(data));
+                        if (data.length >= 34) {
+                            inputData = Number(number.Uint128LE.unpack(data.substring(0, 34)).toBigInt());
                         } else if (data.length === 18) {
-                            inputData = Number(utils.readBigUInt64LE(data));
+                            inputData = Number(number.Uint64LE.unpack(data).toBigInt());
                         }
                     }
                 }
@@ -178,8 +196,8 @@ export class TransactionService {
                     outputIndex = index;
                 }
             } else if (output.type) {
-                const outputScriptType = { args: output.type.args, codeHash: output.type.code_hash, hashType: output.type.hash_type };
-                if (TransactionService.isScriptTypeScript(outputScriptType, this.connection.getConfig().SCRIPTS.SUDT!)) {
+                const outputScriptType = { args: output.type.args, codeHash: output.type.codeHash, hashType: output.type.hashType };
+                if (this.isScriptTokenScript(outputScriptType)) {
                     tokensDestinationsIndex.push(index);
                 }
             }
@@ -192,17 +210,15 @@ export class TransactionService {
             return {
                 quantity: parseInt(output.capacity, 16) / 100000000,
                 address: this.connection.getAddressFromLock(output.lock),
-                type: output.type
-                    ? { args: output.type.args, codeHash: output.type.code_hash, hashType: output.type.hash_type }
-                    : undefined,
+                type: output.type ? { args: output.type.args, codeHash: output.type.codeHash, hashType: output.type.hashType } : undefined,
             };
         });
-        lumosTx.transaction.outputs_data.map((data, index) => {
+        lumosTx.transaction.outputsData.map((data, index) => {
             if (data !== "0x") {
-                if (data.length === 34) {
-                    outputs[index].data = Number(utils.readBigUInt128LE(data));
+                if (data.length >= 34) {
+                    outputs[index].data = Number(number.Uint128LE.unpack(data.substring(0, 34)).toBigInt());
                 } else if (data.length === 18) {
-                    outputs[index].data = Number(utils.readBigUInt64LE(data));
+                    outputs[index].data = Number(number.Uint64LE.unpack(data).toBigInt());
                 }
             }
         });
@@ -226,7 +242,7 @@ export class TransactionService {
         } else if (outputIndex !== null) {
             const { type: outputType, data, quantity } = outputs[outputIndex];
             scriptType = outputType!;
-            if (TransactionService.isScriptTypeScript(scriptType, this.connection.getConfig().SCRIPTS.SUDT!)) {
+            if (this.isScriptTokenScript(scriptType)) {
                 type = !isReceive ? TransactionType.SEND_TOKEN : TransactionType.RECEIVE_TOKEN;
                 if (type === TransactionType.RECEIVE_TOKEN) {
                     tokenAmount = data || 0;
@@ -248,7 +264,7 @@ export class TransactionService {
             }
         } else {
             scriptType = inputType!;
-            if (TransactionService.isScriptTypeScript(scriptType, this.connection.getConfig().SCRIPTS.SUDT!)) {
+            if (this.isScriptTokenScript(scriptType)) {
                 type = !isReceive ? TransactionType.SEND_TOKEN : TransactionType.RECEIVE_TOKEN;
                 if (inputData) {
                     tokenAmount = inputData;
@@ -261,7 +277,7 @@ export class TransactionService {
         }
 
         const transaction: Transaction = {
-            status: lumosTx.tx_status.status as TransactionStatus,
+            status: lumosTx.txStatus.status as TransactionStatus,
             transactionHash: lumosTx.transaction.hash!,
             inputs,
             outputs,
@@ -270,9 +286,9 @@ export class TransactionService {
             amount,
             tokenAmount,
         };
-        if (lumosTx.tx_status.block_hash) {
-            const header = await this.connection.getBlockHeaderFromHash(lumosTx.tx_status.block_hash);
-            transaction.blockHash = lumosTx.tx_status.block_hash;
+        if (lumosTx.txStatus.blockHash) {
+            const header = await this.connection.getBlockHeaderFromHash(lumosTx.txStatus.blockHash);
+            transaction.blockHash = lumosTx.txStatus.blockHash;
             transaction.blockNumber = parseInt(header.number, 16);
             transaction.timestamp = new Date(parseInt(header.timestamp, 16));
         }
@@ -288,7 +304,12 @@ export class TransactionService {
         return TransactionService.addCellDep(txSkeleton, this.connection.getConfig().SCRIPTS.SUDT!);
     }
 
+    addXudtCellDep(txSkeleton: TransactionSkeletonType): TransactionSkeletonType {
+        return TransactionService.addCellDep(txSkeleton, XudtConfig[this.connection.getEnvironment()]);
+    }
+
     injectCapacity(txSkeleton: TransactionSkeletonType, capacity: bigint, cells: Cell[]): TransactionSkeletonType {
+        txSkeleton = this.addSecp256CellDep(txSkeleton);
         let lastScript: Script | undefined;
         let changeCell: Cell | undefined;
         let changeCapacity = BigInt(0);
@@ -296,11 +317,11 @@ export class TransactionService {
 
         for (const cell of cells) {
             // Cell is empty
-            if (!cell.cell_output.type) {
+            if (!cell.cellOutput.type) {
                 txSkeleton = txSkeleton.update("inputs", (inputs) => inputs.push(cell));
                 txSkeleton = txSkeleton.update("witnesses", (witnesses) => witnesses.push("0x"));
 
-                const inputCapacity = BigInt(cell.cell_output.capacity);
+                const inputCapacity = BigInt(cell.cellOutput.capacity);
                 let deductCapacity = inputCapacity;
                 if (deductCapacity > currentCapacity) {
                     deductCapacity = currentCapacity;
@@ -308,12 +329,12 @@ export class TransactionService {
                 currentCapacity -= deductCapacity;
                 changeCapacity += inputCapacity - deductCapacity;
 
-                const lockScript = cell.cell_output.lock;
+                const lockScript = cell.cellOutput.lock;
                 if (
                     !lastScript ||
                     lastScript.args !== lockScript.args ||
-                    lastScript.code_hash !== lockScript.code_hash ||
-                    lastScript.hash_type !== lockScript.hash_type
+                    lastScript.codeHash !== lockScript.codeHash ||
+                    lastScript.hashType !== lockScript.hashType
                 ) {
                     txSkeleton = this.addWitnesses(txSkeleton, lockScript);
                     lastScript = lockScript;
@@ -322,14 +343,14 @@ export class TransactionService {
                 // Got enough capacity
                 if (currentCapacity.toString() === BigInt(0).toString() && changeCapacity > BigInt(0)) {
                     changeCell = {
-                        cell_output: {
+                        cellOutput: {
                             capacity: "0x" + changeCapacity.toString(16),
-                            lock: cell.cell_output.lock,
+                            lock: cell.cellOutput.lock,
                             type: undefined,
                         },
                         data: "0x",
-                        out_point: undefined,
-                        block_hash: undefined,
+                        outPoint: undefined,
+                        blockHash: undefined,
                     };
                     break;
                 }
@@ -349,38 +370,64 @@ export class TransactionService {
         amount: bigint,
         capacity: bigint,
         cells: Cell[],
+        toScript?: Script,
     ): TransactionSkeletonType {
         const sudt = this.connection.getConfig().SCRIPTS.SUDT!;
-        const tokenType = {
-            code_hash: sudt.CODE_HASH,
-            hash_type: sudt.HASH_TYPE,
-            args: token,
-        };
+        const xudt = XudtConfig[this.connection.getEnvironment()];
         const tokenCells = cells.filter((cell) => this.cellIsTokenType(cell, token));
-        const noTypeCells = cells.filter((cell) => !cell.cell_output.type);
+        const noTypeCells = cells.filter((cell) => !cell.cellOutput.type);
         if (tokenCells.length === 0) {
             throw new Error("Insufficient tokens amount");
         }
 
+        const isSudt = tokenCells[0].cellOutput.type!.codeHash === sudt.CODE_HASH;
+        const xudtData = isSudt ? "" : tokenCells[0].data.substring(34);
+        txSkeleton = this.addSecp256CellDep(txSkeleton);
+        txSkeleton = isSudt ? this.addSudtCellDep(txSkeleton) : this.addXudtCellDep(txSkeleton);
+
+        const tokenType = {
+            codeHash: isSudt ? sudt.CODE_HASH : xudt.CODE_HASH,
+            hashType: isSudt ? sudt.HASH_TYPE : xudt.HASH_TYPE,
+            args: token,
+        };
         const changeCell: Cell = {
-            cell_output: {
+            cellOutput: {
                 capacity: "0x0",
-                lock: tokenCells[0].cell_output.lock,
+                lock: tokenCells[0].cellOutput.lock,
                 type: tokenType,
             },
-            data: utils.toBigUInt128LE(BigInt(0).valueOf()),
-            out_point: undefined,
-            block_hash: undefined,
+            data: bytes.hexify(number.Uint128LE.pack("0")) + xudtData,
+            outPoint: undefined,
+            blockHash: undefined,
         };
-        const changeCellWithoutSudt: Cell = {
-            cell_output: {
+        if (toScript) {
+            txSkeleton = txSkeleton.update("outputs", (outputs) => {
+                return outputs.push({
+                    cellOutput: {
+                        capacity: "0x" + capacity.toString(16),
+                        lock: toScript,
+                        type: tokenType,
+                    },
+                    data: bytes.hexify(number.Uint128LE.pack(amount.toString())) + xudtData,
+                });
+            });
+
+            txSkeleton = txSkeleton.update("fixedEntries", (fixedEntries) => {
+                return fixedEntries.push({
+                    field: "outputs",
+                    index: txSkeleton.get("outputs").size - 1,
+                });
+            });
+        }
+        const changeCellWithoutUdt: Cell = {
+            cellOutput: {
                 capacity: "0x0",
-                lock: tokenCells[0].cell_output.lock,
+                lock: tokenCells[0].cellOutput.lock,
                 type: undefined,
             },
             data: "0x",
-            out_point: undefined,
-            block_hash: undefined,
+            outPoint: undefined,
+            blockHash: undefined,
         };
         let lastScript: Script | undefined;
         let changeCapacity = BigInt(0);
@@ -392,7 +439,7 @@ export class TransactionService {
             txSkeleton = txSkeleton.update("inputs", (inputs) => inputs.push(cell));
             txSkeleton = txSkeleton.update("witnesses", (witnesses) => witnesses.push("0x"));
 
-            const inputCapacity = BigInt(cell.cell_output.capacity);
+            const inputCapacity = BigInt(cell.cellOutput.capacity);
             let deductCapacity = inputCapacity;
             if (deductCapacity > currentCapacity) {
                 deductCapacity = currentCapacity;
@@ -400,8 +447,8 @@ export class TransactionService {
             currentCapacity -= deductCapacity;
             changeCapacity += inputCapacity - deductCapacity;
 
-            if (cell.cell_output.type) {
-                const inputAmount = utils.readBigUInt128LECompatible(cell.data).toBigInt();
+            if (cell.cellOutput.type) {
+                const inputAmount = number.Uint128LE.unpack(cell.data.substring(0, 34)).toBigInt();
                 let deductAmount = inputAmount;
                 if (deductAmount > currentAmount) {
                     deductAmount = currentAmount;
@@ -410,12 +457,12 @@ export class TransactionService {
                 changeAmount += inputAmount - deductAmount;
             }
 
-            const lockScript = cell.cell_output.lock;
+            const lockScript = cell.cellOutput.lock;
             if (
                 !lastScript ||
                 lastScript.args !== lockScript.args ||
-                lastScript.code_hash !== lockScript.code_hash ||
-                lastScript.hash_type !== lockScript.hash_type
+                lastScript.codeHash !== lockScript.codeHash ||
+                lastScript.hashType !== lockScript.hashType
             ) {
                 txSkeleton = this.addWitnesses(txSkeleton, lockScript);
                 lastScript = lockScript;
@@ -427,9 +474,9 @@ export class TransactionService {
                 currentAmount.toString() === BigInt(0).toString() &&
                 changeAmount.toString() === BigInt(0).toString() &&
                 (changeCapacity.toString() === BigInt(0).toString() ||
-                    changeCapacity >= helpers.minimalCellCapacityCompatible(changeCellWithoutSudt).toBigInt())
+                    changeCapacity >= helpers.minimalCellCapacityCompatible(changeCellWithoutUdt).toBigInt())
             ) {
-                changeCell.cell_output.type = undefined;
+                changeCell.cellOutput.type = undefined;
                 changeCell.data = "0x";
                 break;
             }
@@ -452,21 +499,21 @@ export class TransactionService {
             throw new Error("Insufficient capacity");
         }
         if (changeAmount > 0 && changeCapacity < helpers.minimalCellCapacityCompatible(changeCell).toBigInt()) {
-            throw new Error("Insufficient capacity for change cell");
+            throw new Error("insufficient_capacity_for_change_cell");
         }
 
         if (changeCapacity > BigInt(0)) {
             let splitFlag = false;
 
-            changeCell.cell_output.capacity = "0x" + changeCapacity.toString(16);
+            changeCell.cellOutput.capacity = "0x" + changeCapacity.toString(16);
             if (changeAmount > 0) {
-                changeCell.data = utils.toBigUInt128LE(changeAmount.toString());
+                changeCell.data = bytes.hexify(number.Uint128LE.pack(changeAmount.toString())) + xudtData;
 
                 const changeCellMin = helpers.minimalCellCapacityCompatible(changeCell).toBigInt();
-                const changeCellNoSudtMin = helpers.minimalCellCapacityCompatible(changeCellWithoutSudt).toBigInt();
+                const changeCellNoSudtMin = helpers.minimalCellCapacityCompatible(changeCellWithoutUdt).toBigInt();
                 if (changeCapacity >= changeCellMin + changeCellNoSudtMin) {
-                    changeCell.cell_output.capacity = "0x" + changeCellMin.toString(16);
-                    changeCellWithoutSudt.cell_output.capacity = "0x" + (changeCapacity - changeCellMin).toString(16);
+                    changeCell.cellOutput.capacity = "0x" + changeCellMin.toString(16);
+                    changeCellWithoutUdt.cellOutput.capacity = "0x" + (changeCapacity - changeCellMin).toString(16);
                     splitFlag = true;
                 }
             }
@@ -481,7 +528,7 @@ export class TransactionService {
                 });
             }
             if (splitFlag) {
-                txSkeleton = txSkeleton.update("outputs", (outputs) => outputs.push(changeCellWithoutSudt));
+                txSkeleton = txSkeleton.update("outputs", (outputs) => outputs.push(changeCellWithoutUdt));
             }
         }
 
@@ -489,6 +536,7 @@ export class TransactionService {
     }
 
     injectNftCapacity(txSkeleton: TransactionSkeletonType, nftScript: ScriptType, nftData: string, cells: Cell[]): TransactionSkeletonType {
+        txSkeleton = this.addSecp256CellDep(txSkeleton);
         const nftCells = cells.filter((cell) => TransactionService.cellIsScriptType(cell, nftScript) && cell.data === nftData);
         if (nftCells.length === 0) {
             throw new Error("Nft not found");
@@ -498,13 +546,13 @@ export class TransactionService {
         // Add output
         txSkeleton = txSkeleton.update("outputs", (outputs) => {
             const output = outputs.get(0)!;
-            output.cell_output.capacity = cell.cell_output.capacity;
+            output.cellOutput.capacity = cell.cellOutput.capacity;
             return outputs.set(0, output);
         });
 
         txSkeleton = txSkeleton.update("inputs", (inputs) => inputs.push(cell));
         txSkeleton = txSkeleton.update("witnesses", (witnesses) => witnesses.push("0x"));
-        txSkeleton = this.addWitnesses(txSkeleton, cell.cell_output.lock);
+        txSkeleton = this.addWitnesses(txSkeleton, cell.cellOutput.lock);
 
         return txSkeleton;
     }
@@ -513,7 +561,7 @@ export class TransactionService {
         return txSkeleton
             .get("inputs")
             .findIndex((input) =>
-                new ScriptValue(input.cell_output.lock, { validate: false }).equals(new ScriptValue(fromScript, { validate: false })),
+                new ScriptValue(input.cellOutput.lock, { validate: false }).equals(new ScriptValue(fromScript, { validate: false })),
             );
     }
 
@@ -529,22 +577,22 @@ export class TransactionService {
             let witness: string = txSkeleton.get("witnesses").get(firstIndex)!;
             const newWitnessArgs: WitnessArgs = { lock: this.secpSignaturePlaceholder };
             if (witness !== "0x") {
-                const witnessArgs = new core.WitnessArgs(new Reader(witness));
-                const lock = witnessArgs.getLock();
-                if (lock.hasValue() && new Reader(lock.value().raw()).serializeJson() !== newWitnessArgs.lock) {
+                const witnessArgs = blockchain.WitnessArgs.unpack(bytes.bytify(witness));
+                const lock = witnessArgs.lock;
+                if (!!lock && lock !== newWitnessArgs.lock) {
                     throw new Error("Lock field in first witness is set aside for signature!");
                 }
 
-                const inputType = witnessArgs.getInputType();
-                if (inputType.hasValue()) {
-                    newWitnessArgs.input_type = new Reader(inputType.value().raw()).serializeJson();
+                const inputType = witnessArgs.inputType;
+                if (inputType) {
+                    newWitnessArgs.inputType = inputType;
                 }
-                const outputType = witnessArgs.getOutputType();
-                if (outputType.hasValue()) {
-                    newWitnessArgs.output_type = new Reader(outputType.value().raw()).serializeJson();
+                const outputType = witnessArgs.outputType;
+                if (outputType) {
+                    newWitnessArgs.outputType = outputType;
                 }
             }
-            witness = new Reader(core.SerializeWitnessArgs(normalizers.NormalizeWitnessArgs(newWitnessArgs))).serializeJson();
+            witness = bytes.hexify(blockchain.WitnessArgs.pack(newWitnessArgs));
             txSkeleton = txSkeleton.update("witnesses", (witnesses) => witnesses.set(firstIndex, witness));
         }
 
@@ -625,7 +673,7 @@ export class TransactionService {
 
     async signAndSendTransaction(txSkeleton: TransactionSkeletonType, privateKeys: string[]): Promise<string> {
         const signedTx = this.signTransaction(txSkeleton, privateKeys);
-        const hash = await this.connection.getRPC().send_transaction(signedTx, "passthrough");
+        const hash = await this.connection.getRPC().sendTransaction(signedTx, "passthrough");
 
         return hash;
     }

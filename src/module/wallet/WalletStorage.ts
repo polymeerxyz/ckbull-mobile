@@ -27,8 +27,13 @@ export interface SecureWalletStorageType {
     pin: string | undefined;
 }
 
+export interface WalletStorageMigrations {
+    isLumos0_22_0MigrationDone: boolean;
+}
+
 export interface UnsecureWalletStorageType {
     wallets: UnencryptedWalletInfo[];
+    migrations?: WalletStorageMigrations;
 }
 
 export const WalletStorage = new (class extends BaseStorageService<SecureWalletStorageType, UnsecureWalletStorageType> {
@@ -200,6 +205,49 @@ export const WalletStorage = new (class extends BaseStorageService<SecureWalletS
                     }
                 }),
             );
+        }
+    }
+
+    async clearWalletStates(): Promise<void> {
+        const wallets = await this.getWallets();
+        if (wallets) {
+            await this.setWallets(
+                wallets.map((wallet) => {
+                    return {
+                        ...wallet,
+                        testnet: undefined,
+                        mainnet: undefined,
+                    };
+                }),
+            );
+        }
+    }
+
+    async getMigrations(): Promise<WalletStorageMigrations> {
+        const storage = await this.get();
+
+        return (
+            storage?.migrations || {
+                isLumos0_22_0MigrationDone: false,
+            }
+        );
+    }
+
+    async setMigrations(migrations: Partial<WalletStorageMigrations>): Promise<void> {
+        const storage = await this.get();
+
+        if (storage) {
+            await this.set({ ...storage, migrations: { ...storage.migrations, ...migrations } as WalletStorageMigrations });
+        }
+    }
+
+    async runMigrations(): Promise<void> {
+        const migrations = await this.getMigrations();
+
+        if (!migrations.isLumos0_22_0MigrationDone) {
+            await this.clearWalletStates();
+
+            await this.setMigrations({ isLumos0_22_0MigrationDone: true });
         }
     }
 })();
