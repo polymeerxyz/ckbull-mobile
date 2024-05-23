@@ -9,6 +9,7 @@ import { useRecoilValue } from "recoil";
 import settingsState from "module/settings/state/SettingsState";
 import { Platform, UIManager, LogBox } from "react-native";
 import useCachedResources from "./module/common/hook/useCachedResources";
+import { useLongSyncToast } from "./module/wallet/hook/useLongSyncToast";
 import "module/api/OpenApiConfig";
 
 if (Platform.OS === "android") {
@@ -25,6 +26,8 @@ const App = (): JSX.Element => {
     const loading = useLoad();
     const cachedResourcesLoaded = useCachedResources();
     const { loading: loadingSettings = false } = useRecoilValue(settingsState);
+
+    useLongSyncToast();
 
     return (
         <>

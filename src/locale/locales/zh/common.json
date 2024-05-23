@@ -227,5 +227,6 @@
     "purchaseCompleted": "购买完成!",
     "orderCompletedText": "请记住，您的账户余额将需要几分钟才能反映出新的金额。",
     "selectAddressOfDomain": "在{{domain}}地址下检测到{{count}}个CKB地址：",
-    "sendAllBalance": "发送所有余额"
+    "sendAllBalance": "发送所有余额",
+    "longLoadingText": "您的账户数据较多，加载可能需要一些时间。"
 }
