@@ -1,12 +1,12 @@
 import { Col, Form, Typography, useSetTab } from "@peersyst/react-native-components";
 import Button from "module/common/component/input/Button/Button";
 import sendRecoilState from "module/transaction/state/SendState";
-import { SendScreens } from "module/transaction/component/core/SendModal/SendModal";
 import { useRecoilState } from "recoil";
 import WalletSelector from "module/wallet/component/input/WalletSelector/WalletSelector";
 import useUncommittedTransaction from "module/transaction/hook/useUncommittedTransaction";
 import useWalletState from "module/wallet/hook/useWalletState";
 import { useTranslate } from "module/common/hook/useTranslate";
+import { DepositScreens } from "module/dao/component/core/DepositModal/DepositModal";
 
 export interface DepositForm {
     sender: number;
@@ -29,7 +29,7 @@ const DepositSelectAccountScreen = () => {
     const setTab = useSetTab();
     const handleSubmit = ({ sender }: DepositForm) => {
         setSendState((oldState) => ({ ...oldState, senderWalletIndex: sender }));
-        setTab(SendScreens.AMOUNT_AND_MESSAGE);
+        setTab(DepositScreens.AMOUNT_AND_MESSAGE);
     };
     const uncommittedTransaction = useUncommittedTransaction();
 
