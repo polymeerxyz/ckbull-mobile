@@ -80,6 +80,7 @@ const SendToAddressScreen = () => {
                         domainAddress={receiverDomainAddress}
                         onDomainAddressChange={setReceiverDomainAddress}
                         onScanQr={() => setScanQr(true)}
+                        required
                     />
                     <Col gap="5%">
                         {uncommittedTransaction && (
