@@ -5,7 +5,9 @@ export const swipeButtonStylesheet = stylesheet(SwipeButton)(({ fromTheme }) => 
     height: 52,
     borderRadius: 52,
     backgroundGradient: {
-        colors: [fromTheme("palette.green.200"), fromTheme("palette.green.600")],
+        colors: fromTheme("palette.green.200", (startColor) =>
+            fromTheme("palette.green.600", (endColor) => [startColor, endColor]),
+        ) as unknown as string[],
         start: { x: 0, y: 1 },
         end: { x: 1, y: 0 },
     },
@@ -20,7 +22,9 @@ export const swipeButtonStylesheet = stylesheet(SwipeButton)(({ fromTheme }) => 
     },
     disabled: {
         backgroundGradient: {
-            colors: [fromTheme("palette.disabled"), fromTheme("palette.disabled")],
+            colors: fromTheme("palette.disabled", (startColor) =>
+                fromTheme("palette.disabled", (endColor) => [startColor, endColor]),
+            ) as unknown as string[],
         },
     },
 }));
