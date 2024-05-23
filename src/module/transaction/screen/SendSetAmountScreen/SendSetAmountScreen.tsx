@@ -66,6 +66,7 @@ const SendSetAmountScreen = (): JSX.Element => {
                         name={sendAllFunds ? undefined : SEND_SET_AMOUNT_FORM_KEYS.amount}
                         index={sendState.senderWalletIndex}
                         disabled={sendAllFunds}
+                        key={sendAllFunds ? "inactive-amount-field" : "amount-field"}
                     />
 
                     {asset && asset.type === AssetType.NATIVE_TOKEN && (
