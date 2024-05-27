@@ -1,0 +1,35 @@
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The tag of the release
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v3
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: yarn
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: 📦 Install dependencies
+        run: yarn install
+      - name: 🏗 Set build number
+        run: sed -i -e "s/__BUILD_NUMBER__/${{ github.run_number }}/" eas.json
+      - name: 🚀 Build app
+        run: eas build --non-interactive --no-wait --platform=android --profile=productionRelease
+      - name: Generate Github release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ github.event.inputs.tag }}
+          tag_name: ${{ github.event.inputs.tag }}
+          target_commitish: main
